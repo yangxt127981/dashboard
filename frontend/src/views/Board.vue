@@ -88,6 +88,7 @@
             <el-tab-pane label="全部" name="all" />
             <el-tab-pane label="进行中" name="inProgress" />
             <el-tab-pane label="未开始" name="notStarted" />
+            <el-tab-pane label="已取消" name="cancelled" />
           </el-tabs>
           <div class="table-toolbar">
           <el-button v-if="authStore.isAdmin()" type="primary" size="small" :icon="Plus" @click="openForm()">新增需求</el-button>
@@ -140,12 +141,17 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="操作" :width="authStore.isAdmin() ? 230 : 120" align="center" fixed="right">
+          <el-table-column label="操作" :width="authStore.isAdmin() ? 270 : 120" align="center" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" link size="small" @click="openDetail(row)">详情</el-button>
               <el-button type="info" link size="small" @click="openLog(row)">日志</el-button>
               <template v-if="authStore.isAdmin()">
                 <el-button type="primary" link size="small" @click="openForm(row)">编辑</el-button>
+                <el-popconfirm v-if="row.status !== '已取消'" title="确认取消该需求？" @confirm="handleCancel(row)">
+                  <template #reference>
+                    <el-button type="warning" link size="small">取消</el-button>
+                  </template>
+                </el-popconfirm>
                 <el-popconfirm title="确认删除？" @confirm="handleDelete(row.id)">
                   <template #reference>
                     <el-button type="danger" link size="small">删除</el-button>
@@ -541,7 +547,8 @@ const activeTab = ref('all')
 const tabStatusMap = {
   all: [],
   inProgress: ['设计中', '开发中', '测试中', '已上线'],
-  notStarted: ['未开始']
+  notStarted: ['未开始'],
+  cancelled: ['已取消']
 }
 
 function handleTabChange(tab) {
@@ -550,14 +557,14 @@ function handleTabChange(tab) {
   fetchList()
 }
 
-const statusOptions = ['未开始', '设计中', '开发中', '测试中', '已上线']
+const statusOptions = ['未开始', '设计中', '开发中', '测试中', '已上线', '已取消']
 const priorityOptions = ['紧急', '高', '中', '低']
 const productOwnerOptions = ['刘秋诗', '赵轶群', '丁滢', 'Hanson']
 const departmentOptions = ['选品部', '商品合规部', '美妆支持中心', '财务部', '时尚事业部', '信息安全部', '法律合规部', '公共传播部', '直播现场运营部', '业务增长部', '所有女生直播间', '商品计划部', '招商部', '美妆国货部']
 
 function statusType(status) {
-  const map = { '未开始': 'info', '设计中': 'warning', '开发中': 'primary', '测试中': '', '已上线': 'success' }
-  return map[status] || 'info'
+  const map = { '未开始': 'info', '设计中': 'warning', '开发中': 'primary', '测试中': '', '已上线': 'success', '已取消': 'danger' }
+  return map[status] ?? 'info'
 }
 
 function priorityType(priority) {
@@ -751,6 +758,12 @@ async function handleSubmit() {
   }
 }
 
+async function handleCancel(row) {
+  await update(row.id, { ...row, status: '已取消' })
+  ElMessage.success('已取消')
+  fetchList()
+}
+
 async function handleDelete(id) {
   await remove(id)
   ElMessage.success('删除成功')
@@ -777,10 +790,10 @@ let statusChart = null
 
 const DEPT_LIST = ['选品部','商品合规部','美妆支持中心','财务部','时尚事业部','信息安全部','法律合规部','公共传播部','直播现场运营部','业务增长部','所有女生直播间','商品计划部','招商部','美妆国货部']
 const PRIORITY_LIST = ['紧急','高','中','低']
-const STATUS_LIST = ['未开始','设计中','开发中','测试中','已上线']
+const STATUS_LIST = ['未开始','设计中','开发中','测试中','已上线','已取消']
 
 const PRIORITY_COLORS = { '紧急':'#f56c6c','高':'#e6a23c','中':'#409eff','低':'#909399' }
-const STATUS_COLORS   = { '未开始':'#909399','设计中':'#e6a23c','开发中':'#409eff','测试中':'#67c23a','已上线':'#67c23a' }
+const STATUS_COLORS   = { '未开始':'#909399','设计中':'#e6a23c','开发中':'#409eff','测试中':'#67c23a','已上线':'#67c23a','已取消':'#f56c6c' }
 
 function buildPieOption(title, data, colorMap, manyItems = false) {
   const filtered = data.filter(d => d.value > 0)
