@@ -96,6 +96,9 @@
           <el-popover placement="bottom-end" :width="220" trigger="click">
             <template #reference>
               <el-button :icon="Setting" size="small">列配置</el-button>
+          <el-tooltip content="刷新列表" placement="top">
+            <el-button :icon="Refresh" size="small" circle @click="fetchList" />
+          </el-tooltip>
             </template>
             <div class="col-setting">
               <div class="col-setting-header">
@@ -433,7 +436,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, Plus, Setting, Delete, ArrowDown } from '@element-plus/icons-vue'
+import { Search, Plus, Setting, Delete, ArrowDown, Refresh } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import Sortable from 'sortablejs'
 import { getList, getStats, create, update, remove } from '../api/requirement.js'
