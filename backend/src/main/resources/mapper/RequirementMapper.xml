@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dashboard.mapper.RequirementMapper">
+
+    <resultMap id="requirementMap" type="com.dashboard.entity.Requirement">
+        <id property="id" column="id"/>
+        <result property="functionName" column="function_name"/>
+        <result property="moduleName" column="module_name"/>
+        <result property="requestDepartment" column="request_department"/>
+        <result property="requestOwner" column="request_owner"/>
+        <result property="productOwner" column="product_owner"/>
+        <result property="priority" column="priority"/>
+        <result property="plannedStartTime" column="planned_start_time"/>
+        <result property="plannedEndTime" column="planned_end_time"/>
+        <result property="actualStartTime" column="actual_start_time"/>
+        <result property="actualEndTime" column="actual_end_time"/>
+        <result property="status" column="status"/>
+        <result property="description" column="description"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="findList" resultMap="requirementMap">
+        SELECT * FROM requirement
+        <where>
+            <if test="functionName != null and functionName != ''">
+                AND function_name LIKE CONCAT('%', #{functionName}, '%')
+            </if>
+            <if test="requestDepartment != null and requestDepartment != ''">
+                AND request_department LIKE CONCAT('%', #{requestDepartment}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findById" resultMap="requirementMap">
+        SELECT * FROM requirement WHERE id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.dashboard.entity.Requirement" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO requirement (function_name, module_name, request_department, request_owner,
+                                 product_owner, priority, planned_start_time, planned_end_time,
+                                 actual_start_time, actual_end_time, status, description)
+        VALUES (#{functionName}, #{moduleName}, #{requestDepartment}, #{requestOwner},
+                #{productOwner}, #{priority}, #{plannedStartTime}, #{plannedEndTime},
+                #{actualStartTime}, #{actualEndTime}, #{status}, #{description})
+    </insert>
+
+    <update id="update" parameterType="com.dashboard.entity.Requirement">
+        UPDATE requirement
+        <set>
+            <if test="functionName != null">function_name = #{functionName},</if>
+            <if test="moduleName != null">module_name = #{moduleName},</if>
+            <if test="requestDepartment != null">request_department = #{requestDepartment},</if>
+            <if test="requestOwner != null">request_owner = #{requestOwner},</if>
+            <if test="productOwner != null">product_owner = #{productOwner},</if>
+            <if test="priority != null">priority = #{priority},</if>
+            <if test="plannedStartTime != null">planned_start_time = #{plannedStartTime},</if>
+            <if test="plannedEndTime != null">planned_end_time = #{plannedEndTime},</if>
+            <if test="actualStartTime != null">actual_start_time = #{actualStartTime},</if>
+            <if test="actualEndTime != null">actual_end_time = #{actualEndTime},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="description != null">description = #{description},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM requirement WHERE id = #{id}
+    </delete>
+
+</mapper>

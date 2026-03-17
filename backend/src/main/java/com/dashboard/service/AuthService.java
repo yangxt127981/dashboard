@@ -1,0 +1,11 @@
+package com.dashboard.service;
+
+import com.dashboard.entity.User;
+
+import java.util.Map;
+
+public interface AuthService {
+    Map<String, Object> login(String username, String password);
+    void logout(String token);
+    User getUserByToken(String token);
+}
