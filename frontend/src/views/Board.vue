@@ -25,7 +25,9 @@
             <el-input v-model="query.functionName" placeholder="需求名称" clearable :prefix-icon="Search" />
           </el-col>
           <el-col :span="6">
-            <el-input v-model="query.requestDepartment" placeholder="需求方部门" clearable :prefix-icon="OfficeBuilding" />
+            <el-select v-model="query.requestDepartment" placeholder="需求方部门" clearable filterable style="width: 100%;">
+              <el-option v-for="d in departmentOptions" :key="d" :label="d" :value="d" />
+            </el-select>
           </el-col>
           <el-col :span="4">
             <el-select v-model="query.priority" placeholder="优先级" multiple collapse-tags clearable style="width: 100%;">
@@ -202,7 +204,9 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="需求方部门">
-              <el-input v-model="formData.requestDepartment" placeholder="请输入部门" />
+              <el-select v-model="formData.requestDepartment" placeholder="请选择需求方部门" clearable filterable allow-create style="width: 100%;">
+                <el-option v-for="d in departmentOptions" :key="d" :label="d" :value="d" />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -212,7 +216,9 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="产品对接人">
-              <el-input v-model="formData.productOwner" placeholder="产品经理" />
+              <el-select v-model="formData.productOwner" placeholder="请选择产品对接人" clearable filterable allow-create style="width: 100%;">
+                <el-option v-for="p in productOwnerOptions" :key="p" :label="p" :value="p" />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -327,7 +333,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, OfficeBuilding, Plus, Setting, Delete } from '@element-plus/icons-vue'
+import { Search, Plus, Setting, Delete } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import Sortable from 'sortablejs'
 import { getList, create, update, remove } from '../api/requirement.js'
@@ -450,6 +456,8 @@ function handleTabChange(tab) {
 
 const statusOptions = ['未开始', '设计中', '开发中', '测试中', '已上线']
 const priorityOptions = ['紧急', '高', '中', '低']
+const productOwnerOptions = ['刘秋诗', '赵轶群', '丁滢', 'Hanson']
+const departmentOptions = ['选品部', '商品合规部', '美妆支持中心', '财务部', '时尚事业部', '信息安全部', '法律合规部', '公共传播部', '直播现场运营部', '业务增长部', '所有女生直播间', '商品计划部', '招商部', '美妆国货部']
 
 function statusType(status) {
   const map = { '未开始': 'info', '设计中': 'warning', '开发中': 'primary', '测试中': '', '已上线': 'success' }
