@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 
 CREATE TABLE IF NOT EXISTS `requirement` (
     `id`                  BIGINT PRIMARY KEY AUTO_INCREMENT,
-    `function_name`       VARCHAR(100) NOT NULL COMMENT '功能名称',
+    `function_name`       VARCHAR(100) NOT NULL COMMENT '需求名称',
     `module_name`         VARCHAR(100) COMMENT '模块名称',
     `request_department`  VARCHAR(100) COMMENT '需求方部门',
     `request_owner`       VARCHAR(50)  COMMENT '需求对接人',
@@ -26,6 +26,14 @@ CREATE TABLE IF NOT EXISTS `requirement` (
     `created_at`          DATETIME     DEFAULT CURRENT_TIMESTAMP,
     `updated_at`          DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='需求表';
+
+CREATE TABLE IF NOT EXISTS `attachment` (
+    `id`               BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `requirement_id`   BIGINT       NOT NULL COMMENT '关联需求ID',
+    `file_name`        VARCHAR(255) NOT NULL COMMENT '原始文件名',
+    `file_url`         VARCHAR(500) NOT NULL COMMENT '文件访问路径',
+    `created_at`       DATETIME     DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='附件表';
 
 -- 初始账号
 INSERT INTO `user` (`username`, `password`, `role`) VALUES

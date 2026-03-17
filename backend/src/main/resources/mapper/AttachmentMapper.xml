@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dashboard.mapper.AttachmentMapper">
+
+    <resultMap id="attachmentMap" type="com.dashboard.entity.Attachment">
+        <id property="id" column="id"/>
+        <result property="requirementId" column="requirement_id"/>
+        <result property="fileName" column="file_name"/>
+        <result property="fileUrl" column="file_url"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <select id="findByRequirementId" resultMap="attachmentMap">
+        SELECT * FROM attachment WHERE requirement_id = #{requirementId} ORDER BY created_at ASC
+    </select>
+
+    <insert id="insert" parameterType="com.dashboard.entity.Attachment" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO attachment (requirement_id, file_name, file_url)
+        VALUES (#{requirementId}, #{fileName}, #{fileUrl})
+    </insert>
+
+    <delete id="deleteById">
+        DELETE FROM attachment WHERE id = #{id}
+    </delete>
+
+</mapper>

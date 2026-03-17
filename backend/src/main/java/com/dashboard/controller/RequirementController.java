@@ -31,7 +31,7 @@ public class RequirementController {
             return Result.error(403, "无权限操作");
         }
         requirementService.create(requirement);
-        return Result.success();
+        return Result.success(requirement.getId());
     }
 
     @PutMapping("/{id}")

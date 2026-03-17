@@ -30,11 +30,28 @@
             <if test="requestDepartment != null and requestDepartment != ''">
                 AND request_department LIKE CONCAT('%', #{requestDepartment}, '%')
             </if>
-            <if test="status != null and status != ''">
-                AND status = #{status}
+            <if test="priority != null and priority.size() > 0">
+                AND priority IN
+                <foreach collection="priority" item="p" open="(" separator="," close=")">
+                    #{p}
+                </foreach>
+            </if>
+            <if test="status != null and status.size() > 0">
+                AND status IN
+                <foreach collection="status" item="s" open="(" separator="," close=")">
+                    #{s}
+                </foreach>
             </if>
         </where>
-        ORDER BY created_at DESC
+        <choose>
+            <when test="sortField == 'plannedEndTime' and sortOrder == 'ascending'">ORDER BY planned_end_time ASC</when>
+            <when test="sortField == 'plannedEndTime' and sortOrder == 'descending'">ORDER BY planned_end_time DESC</when>
+            <when test="sortField == 'actualEndTime' and sortOrder == 'ascending'">ORDER BY actual_end_time ASC</when>
+            <when test="sortField == 'actualEndTime' and sortOrder == 'descending'">ORDER BY actual_end_time DESC</when>
+            <when test="sortField == 'priority' and sortOrder == 'ascending'">ORDER BY CASE priority WHEN '紧急' THEN 1 WHEN '高' THEN 2 WHEN '中' THEN 3 WHEN '低' THEN 4 ELSE 5 END ASC</when>
+            <when test="sortField == 'priority' and sortOrder == 'descending'">ORDER BY CASE priority WHEN '紧急' THEN 1 WHEN '高' THEN 2 WHEN '中' THEN 3 WHEN '低' THEN 4 ELSE 5 END DESC</when>
+            <otherwise>ORDER BY CASE priority WHEN '紧急' THEN 1 WHEN '高' THEN 2 WHEN '中' THEN 3 WHEN '低' THEN 4 ELSE 5 END ASC</otherwise>
+        </choose>
     </select>
 
     <select id="findById" resultMap="requirementMap">
