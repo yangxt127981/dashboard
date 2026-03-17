@@ -4,19 +4,34 @@ import com.dashboard.common.Result;
 import com.dashboard.dto.RequirementQueryDTO;
 import com.dashboard.entity.Requirement;
 import com.dashboard.entity.User;
+import com.dashboard.mapper.RequirementMapper;
 import com.dashboard.service.RequirementService;
 import com.github.pagehelper.PageInfo;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/requirements")
 public class RequirementController {
 
     private final RequirementService requirementService;
+    private final RequirementMapper requirementMapper;
 
-    public RequirementController(RequirementService requirementService) {
+    public RequirementController(RequirementService requirementService, RequirementMapper requirementMapper) {
         this.requirementService = requirementService;
+        this.requirementMapper = requirementMapper;
+    }
+
+    @GetMapping("/stats")
+    public Result<?> stats(@RequestParam(required = false) String department) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("department", requirementMapper.statsByDepartment());
+        result.put("priority", requirementMapper.statsByPriority(department));
+        result.put("status", requirementMapper.statsByStatus(department));
+        return Result.success(result);
     }
 
     @GetMapping

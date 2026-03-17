@@ -18,35 +18,69 @@
 
     <!-- 主内容 -->
     <main class="main-content">
-      <!-- 筛选区 -->
-      <el-card class="filter-card" shadow="never">
-        <el-row :gutter="12" align="middle">
-          <el-col :span="6">
-            <el-input v-model="query.functionName" placeholder="需求名称" clearable :prefix-icon="Search" />
-          </el-col>
-          <el-col :span="6">
-            <el-select v-model="query.requestDepartment" placeholder="需求方部门" clearable filterable style="width: 100%;">
-              <el-option v-for="d in departmentOptions" :key="d" :label="d" :value="d" />
-            </el-select>
-          </el-col>
-          <el-col :span="4">
-            <el-select v-model="query.priority" placeholder="优先级" multiple collapse-tags clearable style="width: 100%;">
-              <el-option v-for="p in priorityOptions" :key="p" :label="p" :value="p" />
-            </el-select>
-          </el-col>
-          <el-col :span="4">
-            <el-select v-model="query.status" placeholder="状态" multiple collapse-tags clearable style="width: 100%;" :disabled="activeTab !== 'all'">
-              <el-option v-for="s in statusOptions" :key="s" :label="s" :value="s" />
-            </el-select>
-          </el-col>
-          <el-col :span="4">
-            <el-button type="primary" round @click="fetchList">查询</el-button>
-            <el-button round @click="resetQuery">重置</el-button>
-          </el-col>
-        </el-row>
-      </el-card>
 
-      <!-- 表格 -->
+      <!-- 统计面板区域 -->
+      <section class="section-block">
+        <div class="section-title clickable" @click="statsCollapsed = !statsCollapsed">
+          <span>数据统计</span>
+          <el-icon class="collapse-icon" :class="{ collapsed: statsCollapsed }">
+            <ArrowDown />
+          </el-icon>
+        </div>
+        <el-collapse-transition>
+          <el-card v-show="!statsCollapsed" class="stats-card" shadow="never">
+            <div class="stats-charts">
+              <div class="chart-block">
+                <div ref="deptChartRef" class="chart-item"></div>
+              </div>
+              <div class="chart-divider"></div>
+              <div class="chart-block">
+                <div ref="priorityChartRef" class="chart-item"></div>
+              </div>
+              <div class="chart-divider"></div>
+              <div class="chart-block">
+                <div ref="statusChartRef" class="chart-item"></div>
+              </div>
+            </div>
+          </el-card>
+        </el-collapse-transition>
+      </section>
+
+      <el-divider class="section-divider" />
+
+      <!-- 需求列表区域 -->
+      <section class="section-block">
+        <div class="section-title">需求列表</div>
+
+        <!-- 筛选区 -->
+        <el-card class="filter-card" shadow="never">
+          <el-row :gutter="12" align="middle">
+            <el-col :span="6">
+              <el-input v-model="query.functionName" placeholder="需求名称" clearable :prefix-icon="Search" />
+            </el-col>
+            <el-col :span="6">
+              <el-select v-model="query.requestDepartment" placeholder="需求方部门" clearable filterable style="width: 100%;">
+                <el-option v-for="d in departmentOptions" :key="d" :label="d" :value="d" />
+              </el-select>
+            </el-col>
+            <el-col :span="4">
+              <el-select v-model="query.priority" placeholder="优先级" multiple collapse-tags clearable style="width: 100%;">
+                <el-option v-for="p in priorityOptions" :key="p" :label="p" :value="p" />
+              </el-select>
+            </el-col>
+            <el-col :span="4">
+              <el-select v-model="query.status" placeholder="状态" multiple collapse-tags clearable style="width: 100%;" :disabled="activeTab !== 'all'">
+                <el-option v-for="s in statusOptions" :key="s" :label="s" :value="s" />
+              </el-select>
+            </el-col>
+            <el-col :span="4">
+              <el-button type="primary" round @click="fetchList">查询</el-button>
+              <el-button round @click="resetQuery">重置</el-button>
+            </el-col>
+          </el-row>
+        </el-card>
+
+        <!-- 表格 -->
       <el-card class="table-card" shadow="never">
         <!-- Tab 页签 + 工具栏 -->
         <div class="table-header">
@@ -133,6 +167,7 @@
           />
         </div>
       </el-card>
+      </section>
     </main>
 
     <!-- 图片预览 -->
@@ -331,15 +366,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, Plus, Setting, Delete } from '@element-plus/icons-vue'
+import { Search, Plus, Setting, Delete, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import Sortable from 'sortablejs'
-import { getList, create, update, remove } from '../api/requirement.js'
+import { getList, getStats, create, update, remove } from '../api/requirement.js'
 import { logout } from '../api/auth.js'
 import { getAttachments, addAttachment, deleteAttachment } from '../api/attachment.js'
 import { useAuthStore } from '../stores/auth.js'
+import * as echarts from 'echarts'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -478,6 +514,7 @@ async function fetchList() {
   } finally {
     loading.value = false
   }
+  fetchStats(selectedDept.value)
 }
 
 function handleSortChange({ prop, order }) {
@@ -625,9 +662,112 @@ async function handleLogout() {
   router.push('/login')
 }
 
+// 统计折叠 & 联动
+const statsCollapsed = ref(false)
+const selectedDept = ref(null)
+
+// 统计图表
+const deptChartRef = ref()
+const priorityChartRef = ref()
+const statusChartRef = ref()
+let deptChart = null
+let priorityChart = null
+let statusChart = null
+
+const DEPT_LIST = ['选品部','商品合规部','美妆支持中心','财务部','时尚事业部','信息安全部','法律合规部','公共传播部','直播现场运营部','业务增长部','所有女生直播间','商品计划部','招商部','美妆国货部']
+const PRIORITY_LIST = ['紧急','高','中','低']
+const STATUS_LIST = ['未开始','设计中','开发中','测试中','已上线']
+
+const PRIORITY_COLORS = { '紧急':'#f56c6c','高':'#e6a23c','中':'#409eff','低':'#909399' }
+const STATUS_COLORS   = { '未开始':'#909399','设计中':'#e6a23c','开发中':'#409eff','测试中':'#67c23a','已上线':'#67c23a' }
+
+function buildPieOption(title, data, colorMap, manyItems = false) {
+  const filtered = data.filter(d => d.value > 0)
+  const legendOpt = manyItems
+    ? { type: 'scroll', orient: 'horizontal', bottom: 0, textStyle: { fontSize: 11 } }
+    : { orient: 'vertical', right: 10, top: 'middle', textStyle: { fontSize: 11 } }
+  const center = manyItems ? ['50%', '46%'] : ['38%', '55%']
+  return {
+    title: { text: title, left: 'center', top: 8, textStyle: { fontSize: 13, fontWeight: 600, color: '#1d2129' } },
+    tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+    legend: legendOpt,
+    series: [{
+      type: 'pie',
+      radius: ['38%', '62%'],
+      center,
+      data: filtered,
+      label: { show: false },
+      emphasis: { label: { show: true, fontSize: 12 } },
+      itemStyle: {
+        color: colorMap ? (params) => colorMap[params.name] || undefined : undefined
+      }
+    }]
+  }
+}
+
+async function fetchStats(dept) {
+  const res = await getStats(dept)
+  const raw = res.data
+
+  // 部门：预设部门 + DB 中不在预设列表里的部门（如旧数据）
+  const deptMap = Object.fromEntries((raw.department || []).map(d => [d.name, Number(d.value)]))
+  const allDepts = [...DEPT_LIST]
+  Object.keys(deptMap).forEach(name => { if (!allDepts.includes(name)) allDepts.push(name) })
+  const deptData = allDepts.map(name => ({
+    name,
+    value: deptMap[name] || 0,
+    selected: name === dept,
+    itemStyle: name === dept ? { borderWidth: 3, borderColor: '#2d7cf6' } : {}
+  }))
+
+  // 优先级：保持固定顺序
+  const priMap = Object.fromEntries((raw.priority || []).map(d => [d.name, Number(d.value)]))
+  const priData = PRIORITY_LIST.map(name => ({ name, value: priMap[name] || 0 }))
+
+  // 状态：保持固定顺序
+  const statusMap = Object.fromEntries((raw.status || []).map(d => [d.name, Number(d.value)]))
+  const statusData = STATUS_LIST.map(name => ({ name, value: statusMap[name] || 0 }))
+
+  deptChart?.setOption(buildPieOption('部门分布统计（点击部门可联动分析）', deptData, null, true))
+
+  const suffix = dept ? `（${dept}）` : ''
+  priorityChart?.setOption(buildPieOption(`优先级分布统计${suffix}`, priData, PRIORITY_COLORS))
+  statusChart?.setOption(buildPieOption(`状态分布统计${suffix}`, statusData, STATUS_COLORS))
+}
+
+function initCharts() {
+  deptChart = echarts.init(deptChartRef.value)
+  priorityChart = echarts.init(priorityChartRef.value)
+  statusChart = echarts.init(statusChartRef.value)
+
+  // 部门饼图点击联动
+  deptChart.on('click', (params) => {
+    if (params.componentType !== 'series') return
+    if (selectedDept.value === params.name) {
+      // 再次点击取消选中
+      selectedDept.value = null
+      fetchStats(null)
+    } else {
+      selectedDept.value = params.name
+      fetchStats(params.name)
+    }
+  })
+
+  fetchStats(null)
+}
+
 onMounted(() => {
   fetchList()
-  nextTick(initSortable)
+  nextTick(() => {
+    initSortable()
+    initCharts()
+  })
+})
+
+onUnmounted(() => {
+  deptChart?.dispose()
+  priorityChart?.dispose()
+  statusChart?.dispose()
 })
 </script>
 
@@ -705,6 +845,78 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+/* ── 区域块 ── */
+.section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d2129;
+  padding-left: 10px;
+  border-left: 3px solid #2d7cf6;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.section-title.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.section-title.clickable:hover {
+  color: #2d7cf6;
+}
+
+.collapse-icon {
+  font-size: 13px;
+  transition: transform 0.25s;
+}
+
+.collapse-icon.collapsed {
+  transform: rotate(-90deg);
+}
+
+.section-divider {
+  margin: 4px 0;
+}
+
+/* ── 统计卡片 ── */
+.stats-card {
+  border-radius: 8px;
+  border: 1px solid #e8eaed;
+}
+
+.stats-card :deep(.el-card__body) {
+  padding: 8px 16px;
+}
+
+.stats-charts {
+  display: flex;
+  align-items: stretch;
+}
+
+.chart-block {
+  flex: 1;
+  min-width: 0;
+}
+
+.chart-item {
+  width: 100%;
+  height: 220px;
+}
+
+.chart-divider {
+  width: 1px;
+  background: #e8eaed;
+  margin: 8px 0;
 }
 
 /* ── 筛选卡片 ── */

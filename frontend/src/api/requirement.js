@@ -14,6 +14,7 @@ export const getList = (params) => http.get('/requirements', {
     return qs.toString()
   }
 })
+export const getStats = (department) => http.get('/requirements/stats', { params: department ? { department } : {} })
 export const create = (data) => http.post('/requirements', data)
 export const update = (id, data) => http.put(`/requirements/${id}`, data)
 export const remove = (id) => http.delete(`/requirements/${id}`)

@@ -90,4 +90,30 @@
         DELETE FROM requirement WHERE id = #{id}
     </delete>
 
+    <select id="statsByDepartment" resultType="map">
+        SELECT request_department AS name, COUNT(*) AS value
+        FROM requirement
+        WHERE request_department IS NOT NULL AND request_department != ''
+        GROUP BY request_department
+    </select>
+
+    <select id="statsByPriority" resultType="map">
+        SELECT priority AS name, COUNT(*) AS value
+        FROM requirement
+        WHERE priority IS NOT NULL AND priority != ''
+        <if test="department != null and department != ''">
+            AND request_department = #{department}
+        </if>
+        GROUP BY priority
+    </select>
+
+    <select id="statsByStatus" resultType="map">
+        SELECT status AS name, COUNT(*) AS value
+        FROM requirement
+        <if test="department != null and department != ''">
+            WHERE request_department = #{department}
+        </if>
+        GROUP BY status
+    </select>
+
 </mapper>
