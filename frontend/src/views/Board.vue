@@ -140,9 +140,10 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="操作" :width="authStore.isAdmin() ? 180 : 80" align="center" fixed="right">
+          <el-table-column label="操作" :width="authStore.isAdmin() ? 230 : 120" align="center" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" link size="small" @click="openDetail(row)">详情</el-button>
+              <el-button type="info" link size="small" @click="openLog(row)">日志</el-button>
               <template v-if="authStore.isAdmin()">
                 <el-button type="primary" link size="small" @click="openForm(row)">编辑</el-button>
                 <el-popconfirm title="确认删除？" @confirm="handleDelete(row.id)">
@@ -176,6 +177,64 @@
       :url-list="[previewUrl]"
       @close="previewVisible = false"
     />
+
+    <!-- 日志弹窗 -->
+    <el-dialog v-model="logVisible" title="操作日志" width="680px" destroy-on-close>
+      <div v-if="logLoading" v-loading="true" style="height: 200px;"></div>
+      <el-empty v-else-if="logList.length === 0" description="暂无日志记录" />
+      <el-timeline v-else>
+        <el-timeline-item
+          v-for="log in logList"
+          :key="log.id"
+          :timestamp="log.createdAt"
+          placement="top"
+        >
+          <el-card shadow="never" class="log-card">
+            <div class="log-header">
+              <el-tag :type="logTagType(log.operationType)" size="small" effect="dark">{{ log.operationType }}</el-tag>
+              <span class="log-operator">{{ log.operator }}</span>
+            </div>
+            <div class="log-body">
+              <template v-if="log.operationType === '创建'">
+                <div class="log-section-title">创建内容</div>
+                <el-descriptions :column="2" size="small" border>
+                  <el-descriptions-item v-for="(label, key) in LOG_FIELD_MAP" :key="key" :label="label">
+                    {{ parseLogJson(log.afterContent)[key] || '—' }}
+                  </el-descriptions-item>
+                </el-descriptions>
+              </template>
+              <template v-else-if="log.operationType === '删除'">
+                <div class="log-section-title">删除前内容</div>
+                <el-descriptions :column="2" size="small" border>
+                  <el-descriptions-item v-for="(label, key) in LOG_FIELD_MAP" :key="key" :label="label">
+                    {{ parseLogJson(log.beforeContent)[key] || '—' }}
+                  </el-descriptions-item>
+                </el-descriptions>
+              </template>
+              <template v-else>
+                <table class="log-diff-table">
+                  <thead>
+                    <tr><th>字段</th><th>修改前</th><th>修改后</th></tr>
+                  </thead>
+                  <tbody>
+                    <template v-for="(label, key) in LOG_FIELD_MAP" :key="key">
+                      <tr v-if="parseLogJson(log.beforeContent)[key] !== parseLogJson(log.afterContent)[key]" class="log-diff-row">
+                        <td>{{ label }}</td>
+                        <td class="log-before">{{ parseLogJson(log.beforeContent)[key] || '—' }}</td>
+                        <td class="log-after">{{ parseLogJson(log.afterContent)[key] || '—' }}</td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </template>
+            </div>
+          </el-card>
+        </el-timeline-item>
+      </el-timeline>
+      <template #footer>
+        <el-button @click="logVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 详情弹窗 -->
     <el-dialog v-model="detailVisible" title="需求详情" width="720px" destroy-on-close>
@@ -373,6 +432,7 @@ import { ElMessage } from 'element-plus'
 import Sortable from 'sortablejs'
 import { getList, getStats, create, update, remove } from '../api/requirement.js'
 import { logout } from '../api/auth.js'
+import { getLogs } from '../api/log.js'
 import { getAttachments, addAttachment, deleteAttachment } from '../api/attachment.js'
 import { useAuthStore } from '../stores/auth.js'
 import * as echarts from 'echarts'
@@ -532,6 +592,47 @@ function resetQuery() {
   query.page = 1
   activeTab.value = 'all'
   fetchList()
+}
+
+// 日志弹窗
+const logVisible = ref(false)
+const logLoading = ref(false)
+const logList = ref([])
+
+const LOG_FIELD_MAP = {
+  functionName: '需求名称',
+  moduleName: '所属模块',
+  requestDepartment: '需求方部门',
+  requestOwner: '需求对接人',
+  productOwner: '产品对接人',
+  priority: '优先级',
+  status: '状态',
+  plannedStartTime: '计划开始时间',
+  plannedEndTime: '计划完成时间',
+  actualStartTime: '实际开始时间',
+  actualEndTime: '实际完成时间',
+  description: '需求描述'
+}
+
+function logTagType(type) {
+  return { '创建': 'success', '编辑': 'primary', '删除': 'danger' }[type] || 'info'
+}
+
+function parseLogJson(str) {
+  if (!str) return {}
+  try { return JSON.parse(str) } catch { return {} }
+}
+
+async function openLog(row) {
+  logList.value = []
+  logLoading.value = true
+  logVisible.value = true
+  try {
+    const res = await getLogs(row.id)
+    logList.value = res.data || []
+  } finally {
+    logLoading.value = false
+  }
 }
 
 // 详情弹窗
@@ -1042,6 +1143,71 @@ onUnmounted(() => {
 :global(.col-drag-ghost) {
   opacity: 0.5;
   background: #cce0ff;
+}
+
+/* ── 日志弹窗 ── */
+.log-card {
+  border: 1px solid #e8eaed !important;
+}
+
+.log-card :deep(.el-card__body) {
+  padding: 12px 16px;
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.log-operator {
+  font-size: 13px;
+  color: #4e5969;
+  font-weight: 500;
+}
+
+.log-section-title {
+  font-size: 12px;
+  color: #86909c;
+  margin-bottom: 6px;
+}
+
+.log-body {
+  font-size: 13px;
+}
+
+.log-diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.log-diff-table th {
+  background: #f7f8fa;
+  color: #1d2129;
+  font-weight: 600;
+  padding: 6px 10px;
+  border: 1px solid #e8eaed;
+  text-align: left;
+}
+
+.log-diff-table td {
+  padding: 6px 10px;
+  border: 1px solid #e8eaed;
+  color: #4e5969;
+  vertical-align: top;
+}
+
+.log-before {
+  background: #fff2f0;
+  color: #cf1322;
+  text-decoration: line-through;
+}
+
+.log-after {
+  background: #f6ffed;
+  color: #389e0d;
 }
 
 /* ── 附件上传 ── */

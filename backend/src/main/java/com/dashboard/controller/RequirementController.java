@@ -3,6 +3,7 @@ package com.dashboard.controller;
 import com.dashboard.common.Result;
 import com.dashboard.dto.RequirementQueryDTO;
 import com.dashboard.entity.Requirement;
+import com.dashboard.entity.RequirementLog;
 import com.dashboard.entity.User;
 import com.dashboard.mapper.RequirementMapper;
 import com.dashboard.service.RequirementService;
@@ -11,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -40,12 +42,18 @@ public class RequirementController {
         return Result.success(pageInfo);
     }
 
+    @GetMapping("/{id}/logs")
+    public Result<?> logs(@PathVariable Long id) {
+        List<RequirementLog> logs = requirementService.getLogs(id);
+        return Result.success(logs);
+    }
+
     @PostMapping
     public Result<?> create(@RequestBody Requirement requirement, HttpServletRequest request) {
         if (!isAdmin(request)) {
             return Result.error(403, "无权限操作");
         }
-        requirementService.create(requirement);
+        requirementService.create(requirement, getOperator(request));
         return Result.success(requirement.getId());
     }
 
@@ -55,7 +63,7 @@ public class RequirementController {
             return Result.error(403, "无权限操作");
         }
         requirement.setId(id);
-        requirementService.update(requirement);
+        requirementService.update(requirement, getOperator(request));
         return Result.success();
     }
 
@@ -64,8 +72,13 @@ public class RequirementController {
         if (!isAdmin(request)) {
             return Result.error(403, "无权限操作");
         }
-        requirementService.delete(id);
+        requirementService.delete(id, getOperator(request));
         return Result.success();
+    }
+
+    private String getOperator(HttpServletRequest request) {
+        User user = (User) request.getAttribute("currentUser");
+        return user != null ? user.getUsername() : "unknown";
     }
 
     private boolean isAdmin(HttpServletRequest request) {
