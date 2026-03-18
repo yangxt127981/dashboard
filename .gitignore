@@ -1,4 +1,5 @@
 # Backend
+backend/uploads/
 backend/target/
 backend/.mvn/
 *.class
