@@ -4,7 +4,7 @@
 
 内部项目需求看板系统，供信息部管理多部门需求，实现进度透明化。
 
-- **代码仓库**：https://github.com/yangxt127981/dashboard（当前 Tag: V4）
+- **代码仓库**：https://github.com/yangxt127981/dashboard（当前版本: V5）
 - **本地路径**：/Users/hansonyang/Project/dashboard
 - **生产地址**：http://47.103.56.254（阿里云）
 
@@ -48,11 +48,15 @@ npm run dev
 |------|------|------|
 | admin | admin123 | ADMIN（增删改查）|
 | user | user123 | USER（只读）|
-| IOA 用户 | IOA_SSO（自动创建）| USER |
+| IOA 普通用户 | IOA_SSO（自动创建）| USER（只读）|
+| IOA 指定用户 | IOA_SSO（自动升级）| MANAGER（增改查，无删除）|
+
+**MANAGER 角色 IOA 用户列表**（硬编码在 `AuthController.java`，大小写不敏感）：
+`yangxiaotong`、`zhaoyiqun`、`dingying`、`liuqiushi`、`M81496`、`M20506`、`M00828`
 
 ---
 
-## 已实现功能（V4 完整版）
+## 已实现功能（V5 完整版）
 
 ### 登录鉴权
 - **账号密码登录**：POST `/api/auth/login`，返回 UUID Token
@@ -60,14 +64,15 @@ npm run dev
   - 前端从本机 IOA 客户端（`sso.wawo.cc:54339`）拿 Ticket
   - 后端调 IOA CheckTicket API（`ioa.wawo.cc:27800`）验证
   - 首次登录自动创建 USER 角色账号
+  - 特定 IOA 用户自动升级为 MANAGER 角色（见下方权限说明）
 - **登出**：POST `/api/auth/logout`，Token 失效
 - Token 存内存 `ConcurrentHashMap`，由 `AuthInterceptor` 拦截所有 `/api/**`（除 `/api/auth/**`）
-- 权限：ADMIN 可增删改，USER 只读；前端隐藏按钮 + 后端双重校验
+- **三级权限**：ADMIN 可增删改查，MANAGER 可增改查（无删除），USER 只读；前端隐藏按钮 + 后端双重校验
 
 ### 需求列表
 - 分页（PageHelper），默认每页 10 条
-- **Tab 页**：全部 / 进行中（设计中/开发中/测试中/已上线）/ 未开始 / 已取消
-- **筛选**：需求名称模糊搜索、部门下拉、优先级多选、状态多选（仅"全部"Tab 可用）
+- **Tab 页**：全部 / 进行中（设计中/开发中/测试中）/ 未开始 / 已上线 / 已取消
+- **筛选**：需求名称模糊搜索、部门下拉、优先级多选、状态多选（仅"全部"Tab 可用）、产品对接人模糊搜索
 - **排序**：优先级（紧急→高→中→低）、计划完成时间、实际完成时间、计划开始时间、实际开始时间（升降序），后端全局排序
 - **列配置**：可隐藏/显示列，配置持久化到 `localStorage`
 - 列表右上角有刷新按钮
@@ -81,10 +86,10 @@ npm run dev
 部门列表：信息部、产品部、运营部、市场部、财务部、商品选品部、其他
 
 ### 需求 CRUD
-- 新增需求：弹窗表单，所有字段，ADMIN 专属
-- 编辑需求：弹窗表单，数据回显，ADMIN 专属
-- 取消需求：状态改为"已取消"，ADMIN 专属
-- 删除需求：二次确认弹窗，ADMIN 专属
+- 新增需求：弹窗表单，所有字段，ADMIN / MANAGER 可用
+- 编辑需求：弹窗表单，数据回显，ADMIN / MANAGER 可用
+- 取消需求：状态改为"已取消"，ADMIN / MANAGER 可用
+- 删除需求：二次确认弹窗，**仅 ADMIN**
 - 需求名称（`functionName`）有非空校验，空值返回 400
 
 ### 附件
@@ -113,7 +118,7 @@ CREATE TABLE `user` (
     `id`       BIGINT       PRIMARY KEY AUTO_INCREMENT,
     `username` VARCHAR(50)  NOT NULL UNIQUE COMMENT '用户名 / IOA 工号',
     `password` VARCHAR(100) NOT NULL        COMMENT '密码（IOA 登录固定为 IOA_SSO）',
-    `role`     VARCHAR(20)  NOT NULL        COMMENT 'ADMIN / USER'
+    `role`     VARCHAR(20)  NOT NULL        COMMENT 'ADMIN / MANAGER / USER'
 );
 
 -- 需求表
@@ -166,9 +171,9 @@ CREATE TABLE `requirement_log` (
 | POST | `/api/auth/ioa/login` | IOA 一键登录 | 公开 |
 | POST | `/api/auth/logout` | 登出 | 已登录 |
 | GET  | `/api/requirements` | 需求列表（分页+筛选+排序）| 已登录 |
-| POST | `/api/requirements` | 新增需求 | ADMIN |
-| PUT  | `/api/requirements/{id}` | 编辑需求 | ADMIN |
-| DELETE | `/api/requirements/{id}` | 删除需求 | ADMIN |
+| POST | `/api/requirements` | 新增需求 | ADMIN / MANAGER |
+| PUT  | `/api/requirements/{id}` | 编辑需求 | ADMIN / MANAGER |
+| DELETE | `/api/requirements/{id}` | 删除需求 | ADMIN 专属 |
 | GET  | `/api/requirements/{id}/logs` | 操作日志 | 已登录 |
 | GET  | `/api/requirements/stats` | 统计数据（三图）| 已登录 |
 | POST | `/api/upload` | 上传附件（≤10MB）| 已登录 |
