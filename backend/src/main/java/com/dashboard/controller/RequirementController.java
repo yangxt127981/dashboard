@@ -53,7 +53,11 @@ public class RequirementController {
         if (!isAdmin(request)) {
             return Result.error(403, "无权限操作");
         }
-        requirementService.create(requirement, getOperator(request));
+        try {
+            requirementService.create(requirement, getOperator(request));
+        } catch (IllegalArgumentException e) {
+            return Result.error(400, e.getMessage());
+        }
         return Result.success(requirement.getId());
     }
 

@@ -563,7 +563,7 @@ function handleTabChange(tab) {
 const statusOptions = ['未开始', '设计中', '开发中', '测试中', '已上线', '已取消']
 const priorityOptions = ['紧急', '高', '中', '低']
 const productOwnerOptions = ['刘秋诗', '赵轶群', '丁滢', 'Hanson']
-const departmentOptions = ['选品部', '商品合规部', '美妆支持中心', '财务部', '时尚事业部', '信息安全部', '法律合规部', '公共传播部', '直播现场运营部', '业务增长部', '所有女生直播间', '商品计划部', '招商部', '美妆国货部']
+const departmentOptions = ['商品选品部', '商品合规部', '美妆支持中心', '财务部', '时尚事业部', '信息安全部', '法律合规部', '公共传播部', '直播现场运营部', '业务增长部', '所有女生直播间', '商品计划部', '招商部', '美妆国货部']
 
 function statusType(status) {
   const map = { '未开始': 'info', '设计中': 'warning', '开发中': 'primary', '测试中': '', '已上线': 'success', '已取消': 'danger' }
@@ -791,7 +791,7 @@ let deptChart = null
 let priorityChart = null
 let statusChart = null
 
-const DEPT_LIST = ['选品部','商品合规部','美妆支持中心','财务部','时尚事业部','信息安全部','法律合规部','公共传播部','直播现场运营部','业务增长部','所有女生直播间','商品计划部','招商部','美妆国货部']
+const DEPT_LIST = ['商品选品部','商品合规部','美妆支持中心','财务部','时尚事业部','信息安全部','法律合规部','公共传播部','直播现场运营部','业务增长部','所有女生直播间','商品计划部','招商部','美妆国货部']
 const PRIORITY_LIST = ['紧急','高','中','低']
 const STATUS_LIST = ['未开始','设计中','开发中','测试中','已上线','已取消']
 

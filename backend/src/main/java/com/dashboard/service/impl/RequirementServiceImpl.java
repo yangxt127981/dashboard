@@ -42,6 +42,9 @@ public class RequirementServiceImpl implements RequirementService {
 
     @Override
     public void create(Requirement requirement, String operator) {
+        if (requirement.getFunctionName() == null || requirement.getFunctionName().isBlank()) {
+            throw new IllegalArgumentException("需求名称不能为空");
+        }
         requirement.setStatus(requirement.getStatus() == null ? "未开始" : requirement.getStatus());
         requirementMapper.insert(requirement);
         writeLog(requirement.getId(), operator, "创建", null, requirement);
