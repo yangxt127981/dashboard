@@ -8,7 +8,7 @@
       </div>
       <div class="top-bar-right">
         <el-tag type="info" effect="plain" style="margin-right: 12px;">
-          {{ authStore.role === 'ADMIN' ? '管理员' : '普通用户' }}
+          {{ authStore.isAdmin() ? '管理员' : authStore.isManager() ? '编辑员' : '普通用户' }}
         </el-tag>
         <span class="user-name">{{ authStore.username }}</span>
         <el-divider direction="vertical" />
@@ -55,13 +55,16 @@
         <!-- 筛选区 -->
         <el-card class="filter-card" shadow="never">
           <el-row :gutter="12" align="middle">
-            <el-col :span="6">
+            <el-col :span="5">
               <el-input v-model="query.functionName" placeholder="需求名称" clearable :prefix-icon="Search" />
             </el-col>
-            <el-col :span="6">
+            <el-col :span="4">
               <el-select v-model="query.requestDepartment" placeholder="需求方部门" clearable filterable style="width: 100%;">
                 <el-option v-for="d in departmentOptions" :key="d" :label="d" :value="d" />
               </el-select>
+            </el-col>
+            <el-col :span="4">
+              <el-input v-model="query.productOwner" placeholder="产品对接人" clearable style="width: 100%;" />
             </el-col>
             <el-col :span="4">
               <el-select v-model="query.priority" placeholder="优先级" multiple collapse-tags clearable style="width: 100%;">
@@ -73,7 +76,7 @@
                 <el-option v-for="s in statusOptions" :key="s" :label="s" :value="s" />
               </el-select>
             </el-col>
-            <el-col :span="4">
+            <el-col :span="3">
               <el-button type="primary" round @click="fetchList">查询</el-button>
               <el-button round @click="resetQuery">重置</el-button>
             </el-col>
@@ -87,11 +90,12 @@
           <el-tabs v-model="activeTab" class="board-tabs" @tab-change="handleTabChange">
             <el-tab-pane label="全部" name="all" />
             <el-tab-pane label="进行中" name="inProgress" />
+            <el-tab-pane label="已上线" name="online" />
             <el-tab-pane label="未开始" name="notStarted" />
             <el-tab-pane label="已取消" name="cancelled" />
           </el-tabs>
           <div class="table-toolbar">
-          <el-button v-if="authStore.isAdmin()" type="primary" size="small" :icon="Plus" @click="openForm()">新增需求</el-button>
+          <el-button v-if="authStore.canEdit()" type="primary" size="small" :icon="Plus" @click="openForm()">新增需求</el-button>
           <el-button size="small" @click="resetColumnOrder">重置列顺序</el-button>
           <el-popover placement="bottom-end" :width="220" trigger="click">
             <template #reference>
@@ -144,18 +148,18 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="操作" :width="authStore.isAdmin() ? 270 : 120" align="center" fixed="right">
+          <el-table-column label="操作" :width="authStore.isAdmin() ? 270 : authStore.canEdit() ? 220 : 120" align="center" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" link size="small" @click="openDetail(row)">详情</el-button>
               <el-button type="info" link size="small" @click="openLog(row)">日志</el-button>
-              <template v-if="authStore.isAdmin()">
+              <template v-if="authStore.canEdit()">
                 <el-button type="primary" link size="small" @click="openForm(row)">编辑</el-button>
                 <el-popconfirm v-if="row.status !== '已取消'" title="确认取消该需求？" @confirm="handleCancel(row)">
                   <template #reference>
                     <el-button type="warning" link size="small">取消</el-button>
                   </template>
                 </el-popconfirm>
-                <el-popconfirm title="确认删除？" @confirm="handleDelete(row.id)">
+                <el-popconfirm v-if="authStore.isAdmin()" title="确认删除？" @confirm="handleDelete(row.id)">
                   <template #reference>
                     <el-button type="danger" link size="small">删除</el-button>
                   </template>
@@ -281,7 +285,7 @@
         </el-descriptions-item>
       </el-descriptions>
       <template #footer>
-        <el-button v-if="authStore.isAdmin()" type="primary" @click="detailVisible = false; openForm(detailData)">编辑</el-button>
+        <el-button v-if="authStore.canEdit()" type="primary" @click="detailVisible = false; openForm(detailData)">编辑</el-button>
         <el-button @click="detailVisible = false">关闭</el-button>
       </template>
     </el-dialog>
@@ -376,7 +380,7 @@
                   />
                   <div class="attachment-name" :title="att.fileName">{{ att.fileName }}</div>
                   <el-button
-                    v-if="authStore.isAdmin()"
+                    v-if="authStore.canEdit()"
                     :icon="Delete"
                     size="small"
                     type="danger"
@@ -407,7 +411,7 @@
                 </div>
                 <!-- 上传按钮 -->
                 <el-upload
-                  v-if="authStore.isAdmin()"
+                  v-if="authStore.canEdit()"
                   action="/api/upload"
                   :headers="uploadHeaders"
                   :show-file-list="false"
@@ -538,6 +542,7 @@ const total = ref(0)
 const query = reactive({
   functionName: '',
   requestDepartment: '',
+  productOwner: '',
   priority: [],
   status: [],
   page: 1,
@@ -549,8 +554,9 @@ const query = reactive({
 const activeTab = ref('all')
 const tabStatusMap = {
   all: [],
-  inProgress: ['设计中', '开发中', '测试中', '已上线'],
+  inProgress: ['设计中', '开发中', '测试中'],
   notStarted: ['未开始'],
+  online: ['已上线'],
   cancelled: ['已取消']
 }
 
@@ -597,6 +603,7 @@ function handleSortChange({ prop, order }) {
 function resetQuery() {
   query.functionName = ''
   query.requestDepartment = ''
+  query.productOwner = ''
   query.priority = []
   query.status = []
   query.page = 1

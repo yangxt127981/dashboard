@@ -7,6 +7,7 @@ import java.util.List;
 public class RequirementQueryDTO {
     private String functionName;
     private String requestDepartment;
+    private String productOwner;
     private List<String> status;
     private List<String> priority;
     private int page = 1;

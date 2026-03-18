@@ -50,7 +50,7 @@ public class RequirementController {
 
     @PostMapping
     public Result<?> create(@RequestBody Requirement requirement, HttpServletRequest request) {
-        if (!isAdmin(request)) {
+        if (!isAdminOrManager(request)) {
             return Result.error(403, "无权限操作");
         }
         try {
@@ -63,7 +63,7 @@ public class RequirementController {
 
     @PutMapping("/{id}")
     public Result<?> update(@PathVariable Long id, @RequestBody Requirement requirement, HttpServletRequest request) {
-        if (!isAdmin(request)) {
+        if (!isAdminOrManager(request)) {
             return Result.error(403, "无权限操作");
         }
         requirement.setId(id);
@@ -88,5 +88,10 @@ public class RequirementController {
     private boolean isAdmin(HttpServletRequest request) {
         User user = (User) request.getAttribute("currentUser");
         return user != null && "ADMIN".equals(user.getRole());
+    }
+
+    private boolean isAdminOrManager(HttpServletRequest request) {
+        User user = (User) request.getAttribute("currentUser");
+        return user != null && ("ADMIN".equals(user.getRole()) || "MANAGER".equals(user.getRole()));
     }
 }

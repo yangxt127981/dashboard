@@ -12,11 +12,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
+
+    private static final Set<String> MANAGER_USERS = Set.of("yangxiaotong", "zhaoyiqun", "dingying", "liuqiushi");
 
     private final AuthService authService;
     private final IoaService ioaService;
@@ -53,6 +56,16 @@ public class AuthController {
         if (user == null) {
             userMapper.insertIoaUser(dto.getUserId());
             user = userMapper.findByUsername(dto.getUserId());
+        }
+
+        // 特定 IOA 用户升级为 MANAGER（可编辑不可删除），仅影响内存中的 token，不修改 DB
+        if (MANAGER_USERS.contains(dto.getUserId().toLowerCase()) && "USER".equals(user.getRole())) {
+            User managerUser = new User();
+            managerUser.setId(user.getId());
+            managerUser.setUsername(user.getUsername());
+            managerUser.setPassword(user.getPassword());
+            managerUser.setRole("MANAGER");
+            user = managerUser;
         }
 
         // 复用现有 token 机制

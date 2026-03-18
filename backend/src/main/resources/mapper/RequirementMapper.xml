@@ -30,6 +30,9 @@
             <if test="requestDepartment != null and requestDepartment != ''">
                 AND request_department LIKE CONCAT('%', #{requestDepartment}, '%')
             </if>
+            <if test="productOwner != null and productOwner != ''">
+                AND product_owner LIKE CONCAT('%', #{productOwner}, '%')
+            </if>
             <if test="priority != null and priority.size() > 0">
                 AND priority IN
                 <foreach collection="priority" item="p" open="(" separator="," close=")">

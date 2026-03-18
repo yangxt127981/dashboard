@@ -25,6 +25,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const isAdmin = () => role.value === 'ADMIN'
+  const isManager = () => role.value === 'MANAGER'
+  const canEdit = () => role.value === 'ADMIN' || role.value === 'MANAGER'
 
-  return { token, username, role, setUser, clearUser, isAdmin }
+  return { token, username, role, setUser, clearUser, isAdmin, isManager, canEdit }
 })
