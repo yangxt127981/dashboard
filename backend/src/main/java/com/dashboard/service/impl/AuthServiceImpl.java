@@ -44,4 +44,9 @@ public class AuthServiceImpl implements AuthService {
     public User getUserByToken(String token) {
         return tokenStore.get(token);
     }
+
+    @Override
+    public void storeToken(String token, User user) {
+        tokenStore.put(token, user);
+    }
 }

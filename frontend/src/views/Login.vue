@@ -35,6 +35,17 @@
           登录
         </el-button>
       </el-form>
+
+      <el-divider>或</el-divider>
+
+      <el-button
+        size="large"
+        :loading="ioaLoading"
+        @click="handleIoaLogin"
+        style="width: 100%;"
+      >
+        IOA 一键登录
+      </el-button>
     </el-card>
   </div>
 </template>
@@ -44,13 +55,14 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { login } from '../api/auth.js'
+import { login, ioaLogin } from '../api/auth.js'
 import { useAuthStore } from '../stores/auth.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const formRef = ref()
 const loading = ref(false)
+const ioaLoading = ref(false)
 
 const form = reactive({ username: '', password: '' })
 const rules = {
@@ -68,6 +80,39 @@ async function handleLogin() {
     router.push('/board')
   } finally {
     loading.value = false
+  }
+}
+
+async function handleIoaLogin() {
+  ioaLoading.value = true
+  try {
+    // 调用本机 IOA 客户端获取 Ticket
+    const ssoRes = await fetch(
+      `https://sso.wawo.cc:54339/api/public/clientlogin/auth_login?app_id=f22a6b50-f44b-4ae3-81d8-f9100a36405a&sole_id=${crypto.randomUUID()}`
+    ).then(r => r.json())
+
+    if (!ssoRes.ticket) {
+      ElMessage.error('获取 IOA Ticket 失败，请确认已登录 IOA 客户端')
+      return
+    }
+
+    // 解析 Ticket（JWT payload）获取工号
+    const payload = JSON.parse(atob(ssoRes.ticket.split('.')[1]))
+    const userId = payload.sub
+
+    if (!userId) {
+      ElMessage.error('IOA Ticket 解析失败')
+      return
+    }
+
+    const res = await ioaLogin({ userId, ticket: ssoRes.ticket })
+    authStore.setUser(res.data)
+    ElMessage.success('IOA 登录成功')
+    router.push('/board')
+  } catch (e) {
+    ElMessage.error('IOA 登录失败，请确认已登录 IOA 客户端后重试')
+  } finally {
+    ioaLoading.value = false
   }
 }
 </script>

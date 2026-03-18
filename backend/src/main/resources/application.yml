@@ -18,3 +18,11 @@ pagehelper:
   helper-dialect: mysql
   reasonable: true
   support-methods-arguments: true
+
+ioa:
+  host: https://ioa.wawo.cc:27800
+  appid: f22a6b50-f44b-4ae3-81d8-f9100a36405a
+  secret-key: $2a$10$7in4LrZc71uDlZ7MdxRWquHlu7rLYFdR4bLYeYJ3izh1pTq8pNgX6
+  secret-id: fcd51120db1a11f086c175cafcfa317a
+  api-version: 2022-06-01
+  sso-url: https://sso.wawo.cc:54339/api/public/clientlogin/auth_login

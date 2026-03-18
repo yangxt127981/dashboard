@@ -8,4 +8,5 @@ public interface AuthService {
     Map<String, Object> login(String username, String password);
     void logout(String token);
     User getUserByToken(String token);
+    void storeToken(String token, User user);
 }
