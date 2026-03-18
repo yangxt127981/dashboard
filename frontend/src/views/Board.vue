@@ -96,9 +96,6 @@
           <el-popover placement="bottom-end" :width="220" trigger="click">
             <template #reference>
               <el-button :icon="Setting" size="small">列配置</el-button>
-          <el-tooltip content="刷新列表" placement="top">
-            <el-button :icon="Refresh" size="small" circle @click="fetchList" />
-          </el-tooltip>
             </template>
             <div class="col-setting">
               <div class="col-setting-header">
@@ -116,6 +113,9 @@
               </div>
             </div>
           </el-popover>
+          <el-tooltip content="刷新列表" placement="top">
+            <el-button :icon="Refresh" size="small" circle @click="fetchList" />
+          </el-tooltip>
           </div>
         </div>
 
@@ -459,9 +459,9 @@ const defaultColumns = [
   { key: 'productOwner',      label: '产品对接人', width: 100,   visible: true },
   { key: 'priority',          label: '优先级',     width: 110,   align: 'center', sortable: 'custom', visible: true },
   { key: 'status',            label: '状态',       width: 90,    align: 'center',   visible: true },
-  { key: 'plannedStartTime',  label: '计划开始',   width: 125,   visible: true },
+  { key: 'plannedStartTime',  label: '计划开始',   width: 125,   sortable: 'custom', visible: true },
   { key: 'plannedEndTime',    label: '计划完成',   width: 125,   sortable: 'custom', visible: true },
-  { key: 'actualStartTime',   label: '实际开始',   width: 125,   visible: true },
+  { key: 'actualStartTime',   label: '实际开始',   width: 125,   sortable: 'custom', visible: true },
   { key: 'actualEndTime',     label: '实际完成',   width: 125,   sortable: 'custom', visible: true },
   { key: 'description',       label: '需求描述',   minWidth: 150, showOverflowTooltip: true, visible: true },
 ]
