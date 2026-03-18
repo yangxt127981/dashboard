@@ -118,39 +118,46 @@ async function handleIoaLogin() {
 </script>
 
 <style scoped>
+/* ── 页面容器 ── */
 .login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #e8f4fd 0%, #d0e8f8 100%);
+  background-image: url('/login-bg.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* ── 登录卡片 ── */
 .login-card {
+  position: relative;
+  z-index: 10;
   width: 380px;
-  border-radius: 12px;
-  border: none;
+  border-radius: 16px !important;
+  border: 1px solid rgba(255,255,255,0.95) !important;
   padding: 12px;
+  background: rgba(255,255,255,0.92) !important;
+  backdrop-filter: blur(20px);
+  box-shadow: 0 12px 40px rgba(74,144,217,0.16), 0 2px 12px rgba(0,0,0,0.06) !important;
 }
 
 .login-header {
   text-align: center;
   margin-bottom: 28px;
 }
-
 .logo-icon {
   font-size: 48px;
   color: #409EFF;
   margin-bottom: 8px;
 }
-
 .login-header h2 {
   margin: 8px 0 4px;
   color: #303133;
   font-size: 22px;
   font-weight: 600;
 }
-
 .login-header p {
   color: #909399;
   font-size: 14px;

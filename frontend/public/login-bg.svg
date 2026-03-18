@@ -1,0 +1,250 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <!-- Background gradient: very light blue-purple like the reference -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="60%" y2="100%">
+      <stop offset="0%"   stop-color="#eaf4ff"/>
+      <stop offset="40%"  stop-color="#e0f0ff"/>
+      <stop offset="100%" stop-color="#d0eaff"/>
+    </linearGradient>
+
+    <!-- 3D face gradients -->
+    <linearGradient id="cubeTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#bde0ff"/>
+      <stop offset="100%" stop-color="#93c8f5"/>
+    </linearGradient>
+    <linearGradient id="cubeLeft" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#4a90d9"/>
+      <stop offset="100%" stop-color="#2d7dc8"/>
+    </linearGradient>
+    <linearGradient id="cubeRight" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#2d7dc8"/>
+      <stop offset="100%" stop-color="#1a68b5"/>
+    </linearGradient>
+    <linearGradient id="platformTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#d5eeff"/>
+      <stop offset="100%" stop-color="#b8e0ff"/>
+    </linearGradient>
+    <linearGradient id="platformLeft" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#a8d8ff"/>
+      <stop offset="100%" stop-color="#88c4f5"/>
+    </linearGradient>
+    <linearGradient id="platformRight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#88c4f5"/>
+      <stop offset="100%" stop-color="#70b5e8"/>
+    </linearGradient>
+    <linearGradient id="screenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#bde0ff" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#4a90d9" stop-opacity="0.3"/>
+    </linearGradient>
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#2d7dc8" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#4a90d9" stop-opacity="0.1"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   stop-color="#4a90d9" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#2d7dc8" stop-opacity="0.0"/>
+    </linearGradient>
+
+    <filter id="softShadow">
+      <feDropShadow dx="0" dy="20" stdDeviation="30" flood-color="#2d7dc8" flood-opacity="0.15"/>
+    </filter>
+    <filter id="glow3d">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="bgBlur">
+      <feGaussianBlur stdDeviation="60"/>
+    </filter>
+  </defs>
+
+  <!-- ═══ BACKGROUND ═══ -->
+  <rect width="1920" height="1080" fill="url(#bgGrad)"/>
+
+  <!-- Subtle ambient glow blobs -->
+  <ellipse cx="700" cy="500" rx="500" ry="380" fill="#4a90d9" opacity="0.07" filter="url(#bgBlur)"/>
+  <ellipse cx="1400" cy="300" rx="350" ry="280" fill="#2d7dc8" opacity="0.05" filter="url(#bgBlur)"/>
+  <ellipse cx="300" cy="800" rx="300" ry="220" fill="#93c8f5" opacity="0.06" filter="url(#bgBlur)"/>
+
+  <!-- ═══ DIAGONAL GRID LINES (like the reference image) ═══ -->
+  <g opacity="0.18" stroke="#70b5e8" stroke-width="0.8">
+    <!-- Horizontal lines going left-to-right at slight diagonal -->
+    <line x1="-200" y1="100"  x2="2200" y2="100"/>
+    <line x1="-200" y1="170"  x2="2200" y2="170"/>
+    <line x1="-200" y1="240"  x2="2200" y2="240"/>
+    <line x1="-200" y1="310"  x2="2200" y2="310"/>
+    <line x1="-200" y1="380"  x2="2200" y2="380"/>
+    <line x1="-200" y1="450"  x2="2200" y2="450"/>
+    <line x1="-200" y1="520"  x2="2200" y2="520"/>
+    <line x1="-200" y1="590"  x2="2200" y2="590"/>
+    <line x1="-200" y1="660"  x2="2200" y2="660"/>
+    <line x1="-200" y1="730"  x2="2200" y2="730"/>
+    <line x1="-200" y1="800"  x2="2200" y2="800"/>
+    <line x1="-200" y1="870"  x2="2200" y2="870"/>
+    <line x1="-200" y1="940"  x2="2200" y2="940"/>
+    <line x1="-200" y1="1010" x2="2200" y2="1010"/>
+  </g>
+  <!-- Diagonal lines (the characteristic grid of the style) -->
+  <g opacity="0.12" stroke="#70b5e8" stroke-width="0.8">
+    <line x1="0"    y1="0"    x2="1080" y2="1080"/>
+    <line x1="130"  y1="0"    x2="1210" y2="1080"/>
+    <line x1="260"  y1="0"    x2="1340" y2="1080"/>
+    <line x1="390"  y1="0"    x2="1470" y2="1080"/>
+    <line x1="520"  y1="0"    x2="1600" y2="1080"/>
+    <line x1="650"  y1="0"    x2="1730" y2="1080"/>
+    <line x1="780"  y1="0"    x2="1860" y2="1080"/>
+    <line x1="910"  y1="0"    x2="1990" y2="1080"/>
+    <line x1="1040" y1="0"    x2="2120" y2="1080"/>
+    <line x1="1170" y1="0"    x2="2250" y2="1080"/>
+    <line x1="1300" y1="0"    x2="2380" y2="1080"/>
+    <line x1="1430" y1="0"    x2="2510" y2="1080"/>
+    <line x1="1560" y1="0"    x2="2640" y2="1080"/>
+    <line x1="1690" y1="0"    x2="2770" y2="1080"/>
+    <line x1="1820" y1="0"    x2="2900" y2="1080"/>
+    <!-- Counter-diagonal -->
+    <line x1="1920" y1="0"    x2="840"  y2="1080"/>
+    <line x1="1790" y1="0"    x2="710"  y2="1080"/>
+    <line x1="1660" y1="0"    x2="580"  y2="1080"/>
+    <line x1="1530" y1="0"    x2="450"  y2="1080"/>
+    <line x1="1400" y1="0"    x2="320"  y2="1080"/>
+    <line x1="1270" y1="0"    x2="190"  y2="1080"/>
+    <line x1="1140" y1="0"    x2="60"   y2="1080"/>
+    <line x1="1010" y1="0"    x2="-70"  y2="1080"/>
+  </g>
+
+  <!-- ═══ ISOMETRIC 3D MAIN OBJECT (center-left, like reference camera/device) ═══ -->
+  <!-- Ground platform shadow -->
+  <ellipse cx="750" cy="830" rx="280" ry="60" fill="#2d7dc8" opacity="0.08" filter="url(#bgBlur)"/>
+
+  <!-- Platform base (large isometric slab) -->
+  <g transform="translate(750, 680)" filter="url(#softShadow)">
+    <!-- Platform top face -->
+    <polygon points="0,-60  260,-120  260,60  0,120"    fill="url(#platformTop)" opacity="0.9"/>
+    <!-- Platform left face -->
+    <polygon points="-220,-30  0,-60   0,120  -220,150" fill="url(#platformLeft)"/>
+    <!-- Platform right face -->
+    <polygon points="0,-60  260,-120  260,60  0,120"    fill="none"/>
+    <polygon points="260,-120  480,-90  480,90  260,60"  fill="url(#platformRight)"/>
+    <!-- Platform top highlight edge -->
+    <line x1="0" y1="-60" x2="260" y2="-120" stroke="rgba(255,255,255,0.7)" stroke-width="2"/>
+    <line x1="-220" y1="-30" x2="0" y2="-60" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Main 3D box body (camera body) -->
+  <g transform="translate(720, 520)">
+    <!-- Top face -->
+    <polygon points="30,-80  230,-130  230,-20  30,30"   fill="url(#cubeTop)"/>
+    <!-- Left face -->
+    <polygon points="-130,-50  30,-80   30,30  -130,60"  fill="url(#cubeLeft)"/>
+    <!-- Right face -->
+    <polygon points="30,-80  230,-130  230,80  30,140"   fill="url(#cubeRight)"/>
+    <!-- Top edge highlight -->
+    <line x1="30" y1="-80" x2="230" y2="-130" stroke="rgba(255,255,255,0.8)" stroke-width="2.5"/>
+    <line x1="-130" y1="-50" x2="30" y2="-80" stroke="rgba(255,255,255,0.6)" stroke-width="2"/>
+    <!-- Screen/panel on front-right face -->
+    <polygon points="60,-60  200,-100  200,20  60,60"    fill="url(#screenGrad)" opacity="0.7"/>
+    <polygon points="60,-60  200,-100  200,20  60,60"    fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+    <!-- Play button on screen -->
+    <polygon points="115,-25  145,-10  115,5"            fill="rgba(255,255,255,0.7)"/>
+    <!-- Lens circle on left face -->
+    <ellipse cx="-60" cy="0" rx="42" ry="42"            fill="#1a68b5" opacity="0.8"/>
+    <ellipse cx="-60" cy="0" rx="42" ry="42"            fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"/>
+    <ellipse cx="-60" cy="0" rx="28" ry="28"            fill="#1456a0" opacity="0.9"/>
+    <ellipse cx="-60" cy="0" rx="28" ry="28"            fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+    <ellipse cx="-60" cy="0" rx="14" ry="14"            fill="#0d3d7a" opacity="0.95"/>
+    <circle  cx="-50" cy="-8" r="5"                     fill="rgba(255,255,255,0.6)"/>
+    <!-- Status light -->
+    <circle cx="200" cy="-110" r="5"                    fill="#34d399" filter="url(#glow3d)"/>
+    <circle cx="215" cy="-116" r="4"                    fill="#34d399" opacity="0.6"/>
+  </g>
+
+  <!-- Orbit rings around the main object -->
+  <g transform="translate(720, 580)" opacity="0.5">
+    <ellipse cx="60" cy="0" rx="220" ry="60"  fill="none" stroke="url(#ringGrad)" stroke-width="1.5" stroke-dasharray="8,6" transform="rotate(-20)"/>
+    <ellipse cx="60" cy="0" rx="280" ry="80"  fill="none" stroke="#4a90d9" stroke-width="1" stroke-dasharray="4,8" opacity="0.4" transform="rotate(-20)"/>
+    <ellipse cx="60" cy="0" rx="340" ry="100" fill="none" stroke="#93c8f5" stroke-width="0.8" stroke-dasharray="3,10" opacity="0.3" transform="rotate(-20)"/>
+    <!-- Orbit dot markers -->
+    <circle cx="280" cy="-42" r="4" fill="#4a90d9" opacity="0.8"/>
+    <circle cx="-160" cy="42" r="3" fill="#93c8f5" opacity="0.6"/>
+    <circle cx="330" cy="25"  r="3" fill="#2d7dc8" opacity="0.5"/>
+  </g>
+
+  <!-- ═══ FLOATING GEOMETRIC ACCENT SHAPES ═══ -->
+  <!-- Small cube top-left -->
+  <g transform="translate(180, 200)" opacity="0.7">
+    <polygon points="0,-20  50,-35  50,5   0,20"  fill="#bde0ff"/>
+    <polygon points="-40,-5  0,-20  0,20  -40,35" fill="#4a90d9"/>
+    <polygon points="0,-20  50,-35  50,5   0,20"  fill="none"/>
+    <line x1="0" y1="-20" x2="50" y2="-35" stroke="rgba(255,255,255,0.8)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Small cube right side -->
+  <g transform="translate(1550, 300)" opacity="0.55">
+    <polygon points="0,-30  70,-50  70,10  0,30"  fill="#bde0ff"/>
+    <polygon points="-55,-10  0,-30  0,30  -55,50" fill="#4a90d9"/>
+    <line x1="0" y1="-30" x2="70" y2="-50" stroke="rgba(255,255,255,0.8)" stroke-width="1.5"/>
+    <line x1="-55" y1="-10" x2="0" y2="-30" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
+  </g>
+
+  <!-- Thin floating slab top-center -->
+  <g transform="translate(1100, 150)" opacity="0.4">
+    <polygon points="0,-10  180,-30  180,-10  0,10"  fill="#d5eeff"/>
+    <polygon points="-80,-5  0,-10  0,10  -80,15"    fill="#a8d8ff"/>
+    <polygon points="0,-10  180,-30  180,10  0,30"    fill="#b8e0ff" opacity="0.5"/>
+    <line x1="0" y1="-10" x2="180" y2="-30" stroke="rgba(255,255,255,0.9)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Floating slab bottom-right -->
+  <g transform="translate(1500, 820)" opacity="0.35">
+    <polygon points="0,-12  220,-36  220,-12  0,12" fill="#d5eeff"/>
+    <polygon points="-90,-6  0,-12  0,12  -90,18"   fill="#a8d8ff"/>
+    <line x1="0" y1="-12" x2="220" y2="-36" stroke="rgba(255,255,255,0.9)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Small floating cube lower-left -->
+  <g transform="translate(260, 750)" opacity="0.5">
+    <polygon points="0,-18  44,-30  44,4   0,18"  fill="#bde0ff"/>
+    <polygon points="-36,-4  0,-18  0,18  -36,32" fill="#4a90d9"/>
+    <line x1="0" y1="-18" x2="44" y2="-30" stroke="rgba(255,255,255,0.8)" stroke-width="1.2"/>
+  </g>
+
+  <!-- Floating dots / particles -->
+  <g fill="#4a90d9">
+    <circle cx="1200" cy="200" r="4" opacity="0.5"/>
+    <circle cx="1260" cy="160" r="2.5" opacity="0.4"/>
+    <circle cx="1180" cy="240" r="2" opacity="0.35"/>
+    <circle cx="400"  cy="300" r="3.5" opacity="0.4"/>
+    <circle cx="360"  cy="340" r="2" opacity="0.3"/>
+    <circle cx="1650" cy="650" r="4" opacity="0.4"/>
+    <circle cx="1700" cy="610" r="2.5" opacity="0.3"/>
+    <circle cx="500"  cy="860" r="3" opacity="0.35"/>
+    <circle cx="1350" cy="900" r="3" opacity="0.3"/>
+    <circle cx="900"  cy="120" r="3" opacity="0.35"/>
+    <circle cx="950"  cy="150" r="2" opacity="0.25"/>
+  </g>
+
+  <!-- Connection lines between elements (subtle) -->
+  <g stroke="#93c8f5" stroke-width="1" opacity="0.3" stroke-dasharray="4,6">
+    <line x1="230" y1="220"  x2="530" y2="470"/>
+    <line x1="1550" y1="330" x2="1100" y2="500"/>
+    <line x1="300"  y1="760" x2="530" y2="640"/>
+  </g>
+
+  <!-- Sparkle crosses -->
+  <g stroke="#93c8f5" stroke-width="1.5" opacity="0.5">
+    <line x1="1430" y1="180" x2="1430" y2="196"/>
+    <line x1="1422" y1="188" x2="1438" y2="188"/>
+    <line x1="350"  y1="600" x2="350"  y2="614"/>
+    <line x1="343"  y1="607" x2="357"  y2="607"/>
+    <line x1="1750" y1="750" x2="1750" y2="762"/>
+    <line x1="1744" y1="756" x2="1756" y2="756"/>
+    <line x1="920"  cy="900" x2="920"  y2="912"/>
+    <line x1="914"  y1="906" x2="926"  y2="906"/>
+  </g>
+
+  <!-- ═══ RIGHT SIDE: subtle data panel decoration ═══ -->
+  <!-- Mimics the login card area context - no actual content, just structural lines -->
+  <rect x="1150" y="200" width="500" height="680" rx="24" fill="rgba(255,255,255,0.0)" stroke="rgba(162,180,252,0.12)" stroke-width="1"/>
+
+  <!-- Bottom gradient fade -->
+  <rect x="0" y="850" width="1920" height="230" fill="url(#glowGrad)"/>
+</svg>
