@@ -125,7 +125,7 @@ REMOTE
 # ── Step 5：上传前端 + 配置 Nginx ────────
 echo ""
 echo "[6/6] 上传前端并配置 Nginx..."
-scp -r "$DIST/" "$SERVER:$SERVER_DIR/frontend"
+scp -r "$DIST/." "$SERVER:$SERVER_DIR/frontend"
 
 ssh "$SERVER" bash << 'REMOTE'
 # 写 Nginx 配置

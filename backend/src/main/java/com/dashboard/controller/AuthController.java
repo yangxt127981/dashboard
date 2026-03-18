@@ -19,7 +19,7 @@ import java.util.UUID;
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private static final Set<String> MANAGER_USERS = Set.of("yangxiaotong", "zhaoyiqun", "dingying", "liuqiushi");
+    private static final Set<String> MANAGER_USERS = Set.of("yangxiaotong", "zhaoyiqun", "dingying", "liuqiushi", "m81496", "m20506", "m00828");
 
     private final AuthService authService;
     private final IoaService ioaService;
