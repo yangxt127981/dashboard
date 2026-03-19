@@ -18,6 +18,7 @@ public class UploadController {
 
     private static final long MAX_SIZE = 10 * 1024 * 1024; // 10MB
     private static final String UPLOAD_DIR = "uploads";
+    private static final java.util.Set<String> ALLOWED_TYPES = java.util.Set.of("image/png", "image/jpeg");
 
     @PostMapping
     public Result<?> upload(@RequestParam("file") MultipartFile file) throws IOException {
@@ -26,6 +27,9 @@ public class UploadController {
         }
         if (file.getSize() > MAX_SIZE) {
             return Result.error(400, "文件大小不能超过 10MB");
+        }
+        if (!ALLOWED_TYPES.contains(file.getContentType())) {
+            return Result.error(400, "仅支持 PNG、JPG/JPEG 格式");
         }
 
         String originalName = file.getOriginalFilename();

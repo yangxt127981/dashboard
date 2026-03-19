@@ -443,13 +443,14 @@
                     @click="removeNewAttachment(i)"
                   >删除</el-button>
                 </div>
-                <!-- 上传按钮 -->
+                <!-- 上传按钮：未达5张时显示 -->
                 <el-upload
-                  v-if="authStore.canEdit()"
+                  v-if="authStore.canEdit() && (existingAttachments.length + newAttachments.length) < 5"
                   action="/api/upload"
                   :headers="uploadHeaders"
                   :show-file-list="false"
-                  accept="image/*"
+                  accept="image/png,image/jpeg"
+                  :before-upload="beforeUpload"
                   :on-success="handleUploadSuccess"
                   :on-error="handleUploadError"
                   class="upload-trigger"
@@ -999,6 +1000,20 @@ const previewUrl = ref('')
 async function loadAttachments(requirementId) {
   const res = await getAttachments(requirementId)
   existingAttachments.value = res.data || []
+}
+
+function beforeUpload(file) {
+  const allowed = ['image/png', 'image/jpeg']
+  if (!allowed.includes(file.type)) {
+    ElMessage.error('仅支持 PNG、JPG/JPEG 格式')
+    return false
+  }
+  const total = existingAttachments.value.length + newAttachments.value.length
+  if (total >= 5) {
+    ElMessage.error('最多上传 5 张图片')
+    return false
+  }
+  return true
 }
 
 function handleUploadSuccess(response, uploadFile) {
