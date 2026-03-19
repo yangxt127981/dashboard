@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS `login_log` (
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS `sys_department` (
     `id`         BIGINT       PRIMARY KEY AUTO_INCREMENT,
-    `name`       VARCHAR(100) NOT NULL COMMENT '部门名称',
+    `name`       VARCHAR(100) NOT NULL UNIQUE COMMENT '部门名称',
     `sort_order` INT          DEFAULT 0 COMMENT '排序',
     `created_at` DATETIME     DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='需求方部门字典';
