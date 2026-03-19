@@ -62,6 +62,10 @@
             <when test="sortField == 'moduleName' and sortOrder == 'descending'">ORDER BY module_name DESC</when>
             <when test="sortField == 'priority' and sortOrder == 'ascending'">ORDER BY CASE priority WHEN '紧急' THEN 1 WHEN '高' THEN 2 WHEN '中' THEN 3 WHEN '低' THEN 4 ELSE 5 END ASC</when>
             <when test="sortField == 'priority' and sortOrder == 'descending'">ORDER BY CASE priority WHEN '紧急' THEN 1 WHEN '高' THEN 2 WHEN '中' THEN 3 WHEN '低' THEN 4 ELSE 5 END DESC</when>
+            <when test="sortField == 'createdAt' and sortOrder == 'ascending'">ORDER BY created_at ASC</when>
+            <when test="sortField == 'createdAt' and sortOrder == 'descending'">ORDER BY created_at DESC</when>
+            <when test="sortField == 'updatedAt' and sortOrder == 'ascending'">ORDER BY updated_at ASC</when>
+            <when test="sortField == 'updatedAt' and sortOrder == 'descending'">ORDER BY updated_at DESC</when>
             <otherwise>ORDER BY CASE priority WHEN '紧急' THEN 1 WHEN '高' THEN 2 WHEN '中' THEN 3 WHEN '低' THEN 4 ELSE 5 END ASC</otherwise>
         </choose>
     </select>

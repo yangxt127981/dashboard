@@ -171,7 +171,7 @@
             :show-overflow-tooltip="col.showOverflowTooltip"
             :sortable="col.sortable"
           >
-            <template v-if="col.key === 'priority' || col.key === 'status' || col.key === 'moduleName'" #default="{ row }">
+            <template v-if="col.key === 'priority' || col.key === 'status' || col.key === 'moduleName' || col.key === 'createdAt' || col.key === 'updatedAt'" #default="{ row }">
               <el-tag v-if="col.key === 'priority'" :type="priorityType(row.priority)" size="small" effect="plain">{{ row.priority }}</el-tag>
               <el-tag v-else-if="col.key === 'status'" :type="statusType(row.status)" size="small">{{ row.status }}</el-tag>
               <span v-else-if="col.key === 'moduleName'">
@@ -181,6 +181,8 @@
                 </span>
                 <span v-else>{{ row.moduleName }}</span>
               </span>
+              <span v-else-if="col.key === 'createdAt'">{{ formatDatetime(row.createdAt) }}</span>
+              <span v-else-if="col.key === 'updatedAt'">{{ formatDatetime(row.updatedAt) }}</span>
             </template>
           </el-table-column>
 
@@ -725,7 +727,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Search, Plus, ArrowDown, Setting, Refresh } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -771,6 +773,8 @@ const defaultColumns = [
   { key: 'actualStartTime',   label: '实际开始',   width: 125,   sortable: 'custom', visible: true },
   { key: 'actualEndTime',     label: '实际完成',   width: 125,   sortable: 'custom', visible: true },
   { key: 'description',       label: '需求描述',   minWidth: 150, showOverflowTooltip: true, visible: true },
+  { key: 'createdAt',         label: '创建时间',   width: 165,   sortable: 'custom', visible: true },
+  { key: 'updatedAt',         label: '更新时间',   width: 165,   sortable: 'custom', visible: true },
 ]
 
 const STORAGE_KEY = 'dashboard_column_order'
@@ -895,6 +899,14 @@ function statusType(status) {
 function priorityType(priority) {
   const map = { '紧急': 'danger', '高': 'warning', '中': 'primary', '低': 'info' }
   return map[priority] || 'info'
+}
+
+function formatDatetime(val) {
+  if (!val) return '—'
+  const d = new Date(val)
+  if (isNaN(d)) return val
+  const pad = n => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 async function fetchList() {
@@ -1029,6 +1041,44 @@ function handleUploadError() {
   ElMessage.error('上传失败，请重试')
 }
 
+async function handlePaste(event) {
+  if (!authStore.canEdit()) return
+  const items = event.clipboardData?.items
+  if (!items) return
+  for (const item of items) {
+    if (!['image/png', 'image/jpeg'].includes(item.type)) continue
+    const total = existingAttachments.value.length + newAttachments.value.length
+    if (total >= 5) {
+      ElMessage.error('最多上传 5 张图片')
+      return
+    }
+    const file = item.getAsFile()
+    if (!file) continue
+    const ext = item.type === 'image/png' ? '.png' : '.jpg'
+    const namedFile = new File([file], `paste_${Date.now()}${ext}`, { type: item.type })
+    const formData = new FormData()
+    formData.append('file', namedFile)
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { Authorization: authStore.token },
+        body: formData
+      })
+      const json = await res.json()
+      if (json.code === 200) {
+        newAttachments.value.push({ fileName: json.data.fileName, fileUrl: json.data.url })
+        ElMessage.success('图片已粘贴上传')
+      } else {
+        ElMessage.error(json.message || '上传失败')
+      }
+    } catch {
+      ElMessage.error('上传失败，请重试')
+    }
+    break
+  }
+}
+
+
 function removeExistingAttachment(att) {
   deletedAttachmentIds.value.push(att.id)
   existingAttachments.value = existingAttachments.value.filter(a => a.id !== att.id)
@@ -1045,6 +1095,13 @@ function openPreview(url) {
 
 // 弹窗表单
 const dialogVisible = ref(false)
+watch(dialogVisible, (val) => {
+  if (val) {
+    document.addEventListener('paste', handlePaste)
+  } else {
+    document.removeEventListener('paste', handlePaste)
+  }
+})
 const submitting = ref(false)
 const editingId = ref(null)
 const dialogFormRef = ref()
