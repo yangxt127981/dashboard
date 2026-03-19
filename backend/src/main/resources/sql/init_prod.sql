@@ -65,6 +65,49 @@ CREATE TABLE IF NOT EXISTS `requirement_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='需求操作日志表';
 
 -- ------------------------------------------------------------
+-- 用户登录日志表
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `login_log` (
+    `id`               BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    `username`         VARCHAR(50)  NOT NULL COMMENT '登录账号',
+    `login_type`       VARCHAR(20)  NOT NULL COMMENT '登录方式：账号密码/IOA',
+    `login_ip`         VARCHAR(50)           COMMENT '登录IP',
+    `user_agent`       VARCHAR(255)          COMMENT '浏览器信息',
+    `login_time`       DATETIME     NOT NULL COMMENT '登录时间',
+    `logout_time`      DATETIME              COMMENT '退出时间',
+    `duration_minutes` INT                   COMMENT '停留时长（分钟）',
+    `status`           VARCHAR(10)  NOT NULL DEFAULT '在线' COMMENT '在线/已退出'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户登录日志';
+
+-- ------------------------------------------------------------
+-- 需求方部门字典表
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sys_department` (
+    `id`         BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    `name`       VARCHAR(100) NOT NULL COMMENT '部门名称',
+    `sort_order` INT          DEFAULT 0 COMMENT '排序',
+    `created_at` DATETIME     DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='需求方部门字典';
+
+-- ------------------------------------------------------------
+-- 需求模块字典表
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sys_module` (
+    `id`         BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    `name`       VARCHAR(100) NOT NULL COMMENT '模块名称',
+    `sort_order` INT          DEFAULT 0 COMMENT '排序',
+    `created_at` DATETIME     DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='需求模块字典';
+
+-- 部门初始数据
+INSERT INTO `sys_department` (`name`, `sort_order`) VALUES
+('商品选品部', 1), ('商品合规部', 2), ('美妆支持中心', 3), ('财务部', 4),
+('时尚事业部', 5), ('信息安全部', 6), ('法律合规部', 7), ('公共传播部', 8),
+('直播现场运营部', 9), ('业务增长部', 10), ('所有女生直播间', 11),
+('商品计划部', 12), ('招商部', 13), ('美妆国货部', 14)
+ON DUPLICATE KEY UPDATE id=id;
+
+-- ------------------------------------------------------------
 -- 初始账号（生产环境请登录后立即修改 admin 密码）
 -- ------------------------------------------------------------
 INSERT INTO `user` (`username`, `password`, `role`) VALUES

@@ -32,8 +32,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public Result<?> login(@RequestBody LoginDTO dto) {
-        Map<String, Object> data = authService.login(dto.getUsername(), dto.getPassword());
+    public Result<?> login(@RequestBody LoginDTO dto, HttpServletRequest request) {
+        String ip = getClientIp(request);
+        String ua = request.getHeader("User-Agent");
+        Map<String, Object> data = authService.login(dto.getUsername(), dto.getPassword(), ip, ua);
         if (data == null) {
             return Result.error(400, "用户名或密码错误");
         }
@@ -41,7 +43,7 @@ public class AuthController {
     }
 
     @PostMapping("/ioa/login")
-    public Result<?> ioaLogin(@RequestBody IoaLoginDTO dto) {
+    public Result<?> ioaLogin(@RequestBody IoaLoginDTO dto, HttpServletRequest request) {
         if (dto.getUserId() == null || dto.getTicket() == null) {
             return Result.error(400, "参数缺失");
         }
@@ -70,7 +72,7 @@ public class AuthController {
 
         // 复用现有 token 机制
         String token = UUID.randomUUID().toString();
-        authService.storeToken(token, user);
+        authService.storeToken(token, user, getClientIp(request), "IOA", request.getHeader("User-Agent"));
 
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);
@@ -84,5 +86,17 @@ public class AuthController {
         String token = request.getHeader("Authorization");
         authService.logout(token);
         return Result.success();
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) {
+            return ip.split(",")[0].trim();
+        }
+        ip = request.getHeader("X-Real-IP");
+        if (ip != null && !ip.isBlank() && !"unknown".equalsIgnoreCase(ip)) {
+            return ip;
+        }
+        return request.getRemoteAddr();
     }
 }

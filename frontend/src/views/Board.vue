@@ -4,7 +4,7 @@
     <header class="top-bar">
       <div class="top-bar-left">
         <el-icon class="logo"><Grid /></el-icon>
-        <span class="title">项目计划看板</span>
+        <span class="title">ONE家项目计划看板</span>
       </div>
       <div class="top-bar-right">
         <el-tag type="info" effect="plain" style="margin-right: 12px;">
@@ -12,6 +12,19 @@
         </el-tag>
         <span class="user-name">{{ authStore.username }}</span>
         <el-divider direction="vertical" />
+        <el-dropdown v-if="authStore.isAdmin()" style="margin-right: 8px;">
+          <el-button text type="primary">
+            系统管理<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+          </el-button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item @click="openDeptManage">需求方部门维护</el-dropdown-item>
+              <el-dropdown-item @click="openModuleManage">需求模块维护</el-dropdown-item>
+              <el-dropdown-item @click="openUserManage">用户管理</el-dropdown-item>
+              <el-dropdown-item divided @click="openLoginLog">登录日志</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
         <el-button text type="primary" @click="handleLogout">退出登录</el-button>
       </div>
     </header>
@@ -54,9 +67,15 @@
 
         <!-- 筛选区 -->
         <el-card class="filter-card" shadow="never">
+          <!-- 基础筛选行 -->
           <el-row :gutter="12" align="middle">
             <el-col :span="5">
               <el-input v-model="query.functionName" placeholder="需求名称" clearable :prefix-icon="Search" />
+            </el-col>
+            <el-col :span="4">
+              <el-select v-model="query.moduleName" placeholder="所属模块" clearable filterable style="width: 100%;">
+                <el-option v-for="m in moduleOptions" :key="m" :label="m" :value="m" />
+              </el-select>
             </el-col>
             <el-col :span="4">
               <el-select v-model="query.requestDepartment" placeholder="需求方部门" clearable filterable style="width: 100%;">
@@ -66,21 +85,29 @@
             <el-col :span="4">
               <el-input v-model="query.productOwner" placeholder="产品对接人" clearable style="width: 100%;" />
             </el-col>
-            <el-col :span="4">
-              <el-select v-model="query.priority" placeholder="优先级" multiple collapse-tags clearable style="width: 100%;">
-                <el-option v-for="p in priorityOptions" :key="p" :label="p" :value="p" />
-              </el-select>
-            </el-col>
-            <el-col :span="4">
-              <el-select v-model="query.status" placeholder="状态" multiple collapse-tags clearable style="width: 100%;" :disabled="activeTab !== 'all'">
-                <el-option v-for="s in statusOptions" :key="s" :label="s" :value="s" />
-              </el-select>
-            </el-col>
-            <el-col :span="3">
-              <el-button type="primary" round @click="fetchList">查询</el-button>
-              <el-button round @click="resetQuery">重置</el-button>
+            <el-col :span="7" style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
+              <el-button type="primary" @click="fetchList">查询</el-button>
+              <el-button @click="resetQuery">重置</el-button>
+              <el-button text type="primary" @click="advancedVisible = !advancedVisible">
+                {{ advancedVisible ? '收起' : '高级查询' }}
+              </el-button>
             </el-col>
           </el-row>
+          <!-- 高级筛选行 -->
+          <el-collapse-transition>
+            <el-row v-show="advancedVisible" :gutter="12" align="middle" style="margin-top:10px;">
+              <el-col :span="5">
+                <el-select v-model="query.priority" placeholder="优先级" multiple collapse-tags clearable style="width: 100%;">
+                  <el-option v-for="p in priorityOptions" :key="p" :label="p" :value="p" />
+                </el-select>
+              </el-col>
+              <el-col :span="5">
+                <el-select v-model="query.status" placeholder="状态" multiple collapse-tags clearable style="width: 100%;" :disabled="activeTab !== 'all'">
+                  <el-option v-for="s in statusOptions" :key="s" :label="s" :value="s" />
+                </el-select>
+              </el-col>
+            </el-row>
+          </el-collapse-transition>
         </el-card>
 
         <!-- 表格 -->
@@ -88,18 +115,18 @@
         <!-- Tab 页签 + 工具栏 -->
         <div class="table-header">
           <el-tabs v-model="activeTab" class="board-tabs" @tab-change="handleTabChange">
-            <el-tab-pane label="全部" name="all" />
-            <el-tab-pane label="进行中" name="inProgress" />
-            <el-tab-pane label="已上线" name="online" />
-            <el-tab-pane label="未开始" name="notStarted" />
-            <el-tab-pane label="已取消" name="cancelled" />
+            <el-tab-pane :label="`全部（${tabCounts.all}）`" name="all" />
+            <el-tab-pane :label="`进行中（${tabCounts.inProgress}）`" name="inProgress" />
+            <el-tab-pane :label="`已上线（${tabCounts.online}）`" name="online" />
+            <el-tab-pane :label="`未开始（${tabCounts.notStarted}）`" name="notStarted" />
+            <el-tab-pane :label="`已取消（${tabCounts.cancelled}）`" name="cancelled" />
           </el-tabs>
           <div class="table-toolbar">
-          <el-button v-if="authStore.canEdit()" type="primary" size="small" :icon="Plus" @click="openForm()">新增需求</el-button>
+          <el-button v-if="authStore.canEdit()" type="primary" size="small" @click="openForm()">新增需求</el-button>
           <el-button size="small" @click="resetColumnOrder">重置列顺序</el-button>
           <el-popover placement="bottom-end" :width="220" trigger="click">
             <template #reference>
-              <el-button :icon="Setting" size="small">列配置</el-button>
+              <el-icon class="toolbar-icon" title="列配置"><Setting /></el-icon>
             </template>
             <div class="col-setting">
               <div class="col-setting-header">
@@ -117,8 +144,8 @@
               </div>
             </div>
           </el-popover>
-          <el-tooltip content="刷新列表" placement="top">
-            <el-button :icon="Refresh" size="small" circle @click="fetchList" />
+          <el-tooltip content="刷新" placement="top">
+            <el-icon class="toolbar-icon" @click="fetchList"><Refresh /></el-icon>
           </el-tooltip>
           </div>
         </div>
@@ -306,7 +333,9 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="所属模块">
-              <el-input v-model="formData.moduleName" placeholder="请输入模块名称" />
+              <el-select v-model="formData.moduleName" placeholder="请选择模块" clearable filterable allow-create style="width:100%;">
+                <el-option v-for="m in moduleOptions" :key="m" :label="m" :value="m" />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -381,14 +410,12 @@
                   <div class="attachment-name" :title="att.fileName">{{ att.fileName }}</div>
                   <el-button
                     v-if="authStore.canEdit()"
-                    :icon="Delete"
                     size="small"
                     type="danger"
                     text
-                    circle
                     class="attachment-del"
                     @click="removeExistingAttachment(att)"
-                  />
+                  >删除</el-button>
                 </div>
                 <!-- 新上传的附件 -->
                 <div v-for="(att, i) in newAttachments" :key="'new-' + i" class="attachment-item">
@@ -400,14 +427,12 @@
                   />
                   <div class="attachment-name" :title="att.fileName">{{ att.fileName }}</div>
                   <el-button
-                    :icon="Delete"
                     size="small"
                     type="danger"
                     text
-                    circle
                     class="attachment-del"
                     @click="removeNewAttachment(i)"
-                  />
+                  >删除</el-button>
                 </div>
                 <!-- 上传按钮 -->
                 <el-upload
@@ -434,19 +459,173 @@
         <el-button type="primary" :loading="submitting" @click="handleSubmit">确认</el-button>
       </template>
     </el-dialog>
+    <!-- 用户管理弹窗 -->
+    <el-dialog v-model="userManageVisible" title="用户管理" width="640px" destroy-on-close>
+      <div style="margin-bottom:12px;">
+        <el-button type="primary" size="small" @click="openUserForm()">新增用户</el-button>
+      </div>
+      <el-table :data="userList" border size="small" v-loading="userLoading">
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="username" label="用户名" />
+        <el-table-column prop="role" label="角色" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.role === 'ADMIN' ? 'danger' : 'info'" size="small" effect="plain">
+              {{ row.role === 'ADMIN' ? '管理员' : '普通用户' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="130" align="center">
+          <template #default="{ row }">
+            <el-button text type="primary" size="small" @click="openUserForm(row)">编辑</el-button>
+            <el-popconfirm title="确认删除该用户？" @confirm="handleDeleteUser(row.id)">
+              <template #reference>
+                <el-button text type="danger" size="small">删除</el-button>
+              </template>
+            </el-popconfirm>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+
+    <!-- 用户新增/编辑表单 -->
+    <el-dialog v-model="userFormVisible" :title="userFormId ? '编辑用户' : '新增用户'" width="400px" destroy-on-close>
+      <el-form :model="userForm" label-width="80px">
+        <el-form-item label="用户名">
+          <el-input v-model="userForm.username" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item :label="userFormId ? '新密码' : '密码'">
+          <el-input v-model="userForm.password" type="password" show-password
+            :placeholder="userFormId ? '留空则不修改' : '请输入密码'" />
+        </el-form-item>
+        <el-form-item label="角色">
+          <el-select v-model="userForm.role" style="width:100%;">
+            <el-option label="管理员 (ADMIN)" value="ADMIN" />
+            <el-option label="普通用户 (USER)" value="USER" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="userFormVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveUser">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 登录日志弹窗 -->
+    <el-dialog v-model="loginLogVisible" title="登录日志" width="860px" destroy-on-close>
+      <el-row :gutter="12" style="margin-bottom:12px;">
+        <el-col :span="7">
+          <el-input v-model="logQuery.username" placeholder="账号名" clearable @keyup.enter="fetchLoginLogs" />
+        </el-col>
+        <el-col :span="6">
+          <el-select v-model="logQuery.loginType" placeholder="登录方式" clearable style="width:100%;">
+            <el-option label="账号密码" value="账号密码" />
+            <el-option label="IOA" value="IOA" />
+          </el-select>
+        </el-col>
+        <el-col :span="4">
+          <el-button type="primary" @click="fetchLoginLogs">查询</el-button>
+          <el-button @click="logQuery.username=''; logQuery.loginType=''; fetchLoginLogs()">重置</el-button>
+        </el-col>
+      </el-row>
+      <el-table :data="loginLogList" border size="small" v-loading="logLoading2">
+        <el-table-column prop="username" label="账号" width="110" />
+        <el-table-column prop="loginType" label="登录方式" width="90" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.loginType === 'IOA' ? 'success' : 'primary'" size="small" effect="plain">{{ row.loginType }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="loginIp" label="登录IP" width="130" />
+        <el-table-column prop="loginTime" label="登录时间" width="160" />
+        <el-table-column prop="logoutTime" label="退出时间" width="160">
+          <template #default="{ row }">{{ row.logoutTime || '—' }}</template>
+        </el-table-column>
+        <el-table-column prop="durationMinutes" label="停留时长" width="90" align="center">
+          <template #default="{ row }">{{ row.durationMinutes != null ? row.durationMinutes + ' 分钟' : '—' }}</template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="70" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.status === '在线' ? 'success' : 'info'" size="small">{{ row.status }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="userAgent" label="浏览器" show-overflow-tooltip />
+      </el-table>
+      <div style="margin-top:12px; display:flex; justify-content:flex-end;">
+        <el-pagination
+          v-model:current-page="logQuery.page"
+          v-model:page-size="logQuery.size"
+          :page-sizes="[20, 50, 100]"
+          layout="total, sizes, prev, pager, next"
+          :total="logTotal"
+          @change="fetchLoginLogs"
+        />
+      </div>
+    </el-dialog>
+
+    <!-- 部门管理弹窗 -->
+    <el-dialog v-model="deptManageVisible" title="需求方部门维护" width="500px" destroy-on-close>
+      <div style="margin-bottom:12px;">
+        <el-button type="primary" size="small" @click="openDictForm('dept')">新增部门</el-button>
+      </div>
+      <el-table :data="deptList" size="small" border>
+        <el-table-column prop="name" label="部门名称" />
+        <el-table-column prop="sortOrder" label="排序" width="70" />
+        <el-table-column label="操作" width="120" align="center">
+          <template #default="{ row }">
+            <el-button text type="primary" size="small" @click="openDictForm('dept', row)">编辑</el-button>
+            <el-button text type="danger" size="small" @click="handleDeleteDict('dept', row.id)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+
+    <!-- 模块管理弹窗 -->
+    <el-dialog v-model="moduleManageVisible" title="需求模块维护" width="500px" destroy-on-close>
+      <div style="margin-bottom:12px;">
+        <el-button type="primary" size="small" @click="openDictForm('module')">新增模块</el-button>
+      </div>
+      <el-table :data="moduleList" size="small" border>
+        <el-table-column prop="name" label="模块名称" />
+        <el-table-column prop="sortOrder" label="排序" width="70" />
+        <el-table-column label="操作" width="120" align="center">
+          <template #default="{ row }">
+            <el-button text type="primary" size="small" @click="openDictForm('module', row)">编辑</el-button>
+            <el-button text type="danger" size="small" @click="handleDeleteDict('module', row.id)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+
+    <!-- 部门/模块 新增编辑表单 -->
+    <el-dialog v-model="dictFormVisible" :title="dictFormTitle" width="380px" destroy-on-close>
+      <el-form :model="dictForm" label-width="80px">
+        <el-form-item label="名称">
+          <el-input v-model="dictForm.name" placeholder="请输入名称" />
+        </el-form-item>
+        <el-form-item label="排序">
+          <el-input-number v-model="dictForm.sortOrder" :min="0" :max="999" style="width:100%;" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="dictFormVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveDict">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, Plus, Setting, Delete, ArrowDown, Refresh } from '@element-plus/icons-vue'
+import { Search, Plus, ArrowDown, Setting, Refresh } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import Sortable from 'sortablejs'
-import { getList, getStats, create, update, remove } from '../api/requirement.js'
+import { getList, getStats, getTabCounts, create, update, remove } from '../api/requirement.js'
 import { logout } from '../api/auth.js'
 import { getLogs } from '../api/log.js'
 import { getAttachments, addAttachment, deleteAttachment } from '../api/attachment.js'
+import { getDepartments, createDepartment, updateDepartment, deleteDepartment, getModules, createModule, updateModule, deleteModule } from '../api/dict.js'
+import { getLoginLogs } from '../api/loginLog.js'
+import { getUsers, createUser, updateUser, deleteUser } from '../api/user.js'
 import { useAuthStore } from '../stores/auth.js'
 import * as echarts from 'echarts'
 
@@ -542,6 +721,7 @@ const total = ref(0)
 const query = reactive({
   functionName: '',
   requestDepartment: '',
+  moduleName: '',
   productOwner: '',
   priority: [],
   status: [],
@@ -551,7 +731,9 @@ const query = reactive({
   sortOrder: ''
 })
 
+const advancedVisible = ref(false)
 const activeTab = ref('all')
+const tabCounts = reactive({ all: 0, inProgress: 0, online: 0, notStarted: 0, cancelled: 0 })
 const tabStatusMap = {
   all: [],
   inProgress: ['设计中', '开发中', '测试中'],
@@ -569,7 +751,14 @@ function handleTabChange(tab) {
 const statusOptions = ['未开始', '设计中', '开发中', '测试中', '已上线', '已取消']
 const priorityOptions = ['紧急', '高', '中', '低']
 const productOwnerOptions = ['刘秋诗', '赵轶群', '丁滢', 'Hanson']
-const departmentOptions = ['商品选品部', '商品合规部', '美妆支持中心', '财务部', '时尚事业部', '信息安全部', '法律合规部', '公共传播部', '直播现场运营部', '业务增长部', '所有女生直播间', '商品计划部', '招商部', '美妆国货部']
+const departmentOptions = ref([])
+const moduleOptions = ref([])
+
+async function loadDictOptions() {
+  const [deptRes, moduleRes] = await Promise.all([getDepartments(), getModules()])
+  departmentOptions.value = (deptRes.data || []).map(d => d.name)
+  moduleOptions.value = (moduleRes.data || []).map(m => m.name)
+}
 
 function statusType(status) {
   const map = { '未开始': 'info', '设计中': 'warning', '开发中': 'primary', '测试中': '', '已上线': 'success', '已取消': 'danger' }
@@ -584,9 +773,15 @@ function priorityType(priority) {
 async function fetchList() {
   loading.value = true
   try {
-    const res = await getList(query)
-    tableData.value = res.data.list
-    total.value = res.data.total
+    const [listRes, countRes] = await Promise.all([getList(query), getTabCounts(query)])
+    tableData.value = listRes.data.list
+    total.value = listRes.data.total
+    const c = countRes.data || {}
+    tabCounts.all = c.all || 0
+    tabCounts.inProgress = c.inProgress || 0
+    tabCounts.online = c.online || 0
+    tabCounts.notStarted = c.notStarted || 0
+    tabCounts.cancelled = c.cancelled || 0
   } finally {
     loading.value = false
   }
@@ -602,12 +797,14 @@ function handleSortChange({ prop, order }) {
 
 function resetQuery() {
   query.functionName = ''
+  query.moduleName = ''
   query.requestDepartment = ''
   query.productOwner = ''
   query.priority = []
   query.status = []
   query.page = 1
   activeTab.value = 'all'
+  advancedVisible.value = false
   fetchList()
 }
 
@@ -798,7 +995,7 @@ let deptChart = null
 let priorityChart = null
 let statusChart = null
 
-const DEPT_LIST = ['商品选品部','商品合规部','美妆支持中心','财务部','时尚事业部','信息安全部','法律合规部','公共传播部','直播现场运营部','业务增长部','所有女生直播间','商品计划部','招商部','美妆国货部']
+const DEPT_LIST = computed(() => departmentOptions.value.length ? departmentOptions.value : ['商品选品部','商品合规部','美妆支持中心','财务部','时尚事业部','信息安全部','法律合规部','公共传播部','直播现场运营部','业务增长部','所有女生直播间','商品计划部','招商部','美妆国货部'])
 const PRIORITY_LIST = ['紧急','高','中','低']
 const STATUS_LIST = ['未开始','设计中','开发中','测试中','已上线','已取消']
 
@@ -835,7 +1032,7 @@ async function fetchStats(dept) {
 
   // 部门：预设部门 + DB 中不在预设列表里的部门（如旧数据）
   const deptMap = Object.fromEntries((raw.department || []).map(d => [d.name, Number(d.value)]))
-  const allDepts = [...DEPT_LIST]
+  const allDepts = [...DEPT_LIST.value]
   Object.keys(deptMap).forEach(name => { if (!allDepts.includes(name)) allDepts.push(name) })
   const deptData = allDepts.map(name => ({
     name,
@@ -880,7 +1077,147 @@ function initCharts() {
   fetchStats(null)
 }
 
+// ===== 用户管理 =====
+const userManageVisible = ref(false)
+const userLoading = ref(false)
+const userList = ref([])
+const userFormVisible = ref(false)
+const userFormId = ref(null)
+const userForm = reactive({ username: '', password: '', role: 'USER' })
+
+async function openUserManage() {
+  userManageVisible.value = true
+  await refreshUserList()
+}
+
+async function refreshUserList() {
+  userLoading.value = true
+  try {
+    const res = await getUsers()
+    userList.value = res.data || []
+  } finally {
+    userLoading.value = false
+  }
+}
+
+function openUserForm(row = null) {
+  userFormId.value = row?.id ?? null
+  userForm.username = row?.username ?? ''
+  userForm.password = ''
+  userForm.role = row?.role ?? 'USER'
+  userFormVisible.value = true
+}
+
+async function handleSaveUser() {
+  if (!userForm.username.trim()) { ElMessage.error('用户名不能为空'); return }
+  if (!userFormId.value && !userForm.password.trim()) { ElMessage.error('密码不能为空'); return }
+  const payload = { username: userForm.username, role: userForm.role }
+  if (userForm.password.trim()) payload.password = userForm.password
+  if (userFormId.value) {
+    await updateUser(userFormId.value, payload)
+  } else {
+    await createUser({ ...payload, password: userForm.password })
+  }
+  ElMessage.success('保存成功')
+  userFormVisible.value = false
+  await refreshUserList()
+}
+
+async function handleDeleteUser(id) {
+  await deleteUser(id)
+  ElMessage.success('删除成功')
+  await refreshUserList()
+}
+
+// ===== 登录日志 =====
+const loginLogVisible = ref(false)
+const logLoading2 = ref(false)
+const loginLogList = ref([])
+const logTotal = ref(0)
+const logQuery = reactive({ username: '', loginType: '', page: 1, size: 20 })
+
+async function openLoginLog() {
+  loginLogVisible.value = true
+  await fetchLoginLogs()
+}
+
+async function fetchLoginLogs() {
+  logLoading2.value = true
+  try {
+    const res = await getLoginLogs(logQuery)
+    loginLogList.value = res.data.list || []
+    logTotal.value = res.data.total || 0
+  } finally {
+    logLoading2.value = false
+  }
+}
+
+// ===== 字典管理 =====
+const deptManageVisible = ref(false)
+const moduleManageVisible = ref(false)
+const dictFormVisible = ref(false)
+const dictFormTitle = ref('')
+const dictFormType = ref('') // 'dept' | 'module'
+const dictFormId = ref(null)
+const dictForm = reactive({ name: '', sortOrder: 0 })
+const deptList = ref([])
+const moduleList = ref([])
+
+async function openDeptManage() {
+  const res = await getDepartments()
+  deptList.value = res.data || []
+  deptManageVisible.value = true
+}
+
+async function openModuleManage() {
+  const res = await getModules()
+  moduleList.value = res.data || []
+  moduleManageVisible.value = true
+}
+
+function openDictForm(type, row = null) {
+  dictFormType.value = type
+  dictFormId.value = row?.id ?? null
+  dictForm.name = row?.name ?? ''
+  dictForm.sortOrder = row?.sortOrder ?? 0
+  dictFormTitle.value = (row ? '编辑' : '新增') + (type === 'dept' ? '部门' : '模块')
+  dictFormVisible.value = true
+}
+
+async function handleSaveDict() {
+  const payload = { name: dictForm.name, sortOrder: dictForm.sortOrder }
+  if (dictFormType.value === 'dept') {
+    if (dictFormId.value) await updateDepartment(dictFormId.value, payload)
+    else await createDepartment(payload)
+    const res = await getDepartments()
+    deptList.value = res.data || []
+  } else {
+    if (dictFormId.value) await updateModule(dictFormId.value, payload)
+    else await createModule(payload)
+    const res = await getModules()
+    moduleList.value = res.data || []
+  }
+  dictFormVisible.value = false
+  ElMessage.success('保存成功')
+  loadDictOptions()
+}
+
+async function handleDeleteDict(type, id) {
+  if (type === 'dept') {
+    await deleteDepartment(id)
+    const res = await getDepartments()
+    deptList.value = res.data || []
+  } else {
+    await deleteModule(id)
+    const res = await getModules()
+    moduleList.value = res.data || []
+  }
+  ElMessage.success('删除成功')
+  loadDictOptions()
+}
+
 onMounted(() => {
+  loadDictOptions()
   fetchList()
   nextTick(() => {
     initSortable()
@@ -896,6 +1233,31 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+/* ── 工具栏图标 ── */
+.toolbar-icon {
+  font-size: 17px;
+  color: #606266;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+.toolbar-icon:hover {
+  color: #409eff;
+  background: #f0f2f5;
+}
+
+/* ── 按钮高度统一 ── */
+.board-page :deep(.el-button) {
+  height: 32px;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 32px;
+}
+.board-page :deep(.el-button.is-text) {
+  height: 32px;
+}
+
 /* ── 全局布局 ── */
 .board-page {
   min-height: 100vh;

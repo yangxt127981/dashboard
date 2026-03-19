@@ -35,6 +35,28 @@ CREATE TABLE IF NOT EXISTS `attachment` (
     `created_at`       DATETIME     DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='附件表';
 
+CREATE TABLE IF NOT EXISTS `sys_department` (
+    `id`         BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `name`       VARCHAR(100) NOT NULL COMMENT '部门名称',
+    `sort_order` INT          DEFAULT 0 COMMENT '排序',
+    `created_at` DATETIME     DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='需求方部门字典';
+
+CREATE TABLE IF NOT EXISTS `sys_module` (
+    `id`         BIGINT PRIMARY KEY AUTO_INCREMENT,
+    `name`       VARCHAR(100) NOT NULL COMMENT '模块名称',
+    `sort_order` INT          DEFAULT 0 COMMENT '排序',
+    `created_at` DATETIME     DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='需求模块字典';
+
+-- 部门初始数据
+INSERT INTO `sys_department` (`name`, `sort_order`) VALUES
+('商品选品部', 1), ('商品合规部', 2), ('美妆支持中心', 3), ('财务部', 4),
+('时尚事业部', 5), ('信息安全部', 6), ('法律合规部', 7), ('公共传播部', 8),
+('直播现场运营部', 9), ('业务增长部', 10), ('所有女生直播间', 11),
+('商品计划部', 12), ('招商部', 13), ('美妆国货部', 14)
+ON DUPLICATE KEY UPDATE id=id;
+
 -- 初始账号
 INSERT INTO `user` (`username`, `password`, `role`) VALUES
 ('admin', 'admin123', 'ADMIN'),

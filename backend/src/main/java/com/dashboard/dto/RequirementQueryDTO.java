@@ -6,6 +6,7 @@ import java.util.List;
 @Data
 public class RequirementQueryDTO {
     private String functionName;
+    private String moduleName;
     private String requestDepartment;
     private String productOwner;
     private List<String> status;

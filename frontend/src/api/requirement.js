@@ -15,6 +15,17 @@ export const getList = (params) => http.get('/requirements', {
   }
 })
 export const getStats = (department) => http.get('/requirements/stats', { params: department ? { department } : {} })
+export const getTabCounts = (params) => http.get('/requirements/tab-counts', {
+  params,
+  paramsSerializer: (p) => {
+    const qs = new URLSearchParams()
+    Object.entries(p).forEach(([key, val]) => {
+      if (Array.isArray(val)) val.forEach(v => qs.append(key, v))
+      else if (val !== '' && val !== null && val !== undefined) qs.append(key, val)
+    })
+    return qs.toString()
+  }
+})
 export const create = (data) => http.post('/requirements', data)
 export const update = (id, data) => http.put(`/requirements/${id}`, data)
 export const remove = (id) => http.delete(`/requirements/${id}`)

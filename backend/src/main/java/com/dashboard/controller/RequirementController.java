@@ -27,6 +27,26 @@ public class RequirementController {
         this.requirementMapper = requirementMapper;
     }
 
+    @GetMapping("/tab-counts")
+    public Result<?> tabCounts(RequirementQueryDTO query) {
+        List<Map<String, Object>> rows = requirementMapper.countByStatus(query);
+        Map<String, Long> statusMap = new HashMap<>();
+        long total = 0;
+        for (Map<String, Object> row : rows) {
+            String status = (String) row.get("name");
+            long cnt = ((Number) row.get("value")).longValue();
+            statusMap.put(status, cnt);
+            total += cnt;
+        }
+        Map<String, Long> result = new HashMap<>();
+        result.put("all", total);
+        result.put("inProgress", statusMap.getOrDefault("设计中", 0L) + statusMap.getOrDefault("开发中", 0L) + statusMap.getOrDefault("测试中", 0L));
+        result.put("online", statusMap.getOrDefault("已上线", 0L));
+        result.put("notStarted", statusMap.getOrDefault("未开始", 0L));
+        result.put("cancelled", statusMap.getOrDefault("已取消", 0L));
+        return Result.success(result);
+    }
+
     @GetMapping("/stats")
     public Result<?> stats(@RequestParam(required = false) String department) {
         Map<String, Object> result = new HashMap<>();

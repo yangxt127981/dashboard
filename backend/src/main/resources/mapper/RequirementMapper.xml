@@ -27,6 +27,9 @@
             <if test="functionName != null and functionName != ''">
                 AND function_name LIKE CONCAT('%', #{functionName}, '%')
             </if>
+            <if test="moduleName != null and moduleName != ''">
+                AND module_name LIKE CONCAT('%', #{moduleName}, '%')
+            </if>
             <if test="requestDepartment != null and requestDepartment != ''">
                 AND request_department LIKE CONCAT('%', #{requestDepartment}, '%')
             </if>
@@ -96,6 +99,32 @@
     <delete id="deleteById">
         DELETE FROM requirement WHERE id = #{id}
     </delete>
+
+    <select id="countByStatus" resultType="map">
+        SELECT status AS name, COUNT(*) AS value
+        FROM requirement
+        <where>
+            <if test="functionName != null and functionName != ''">
+                AND function_name LIKE CONCAT('%', #{functionName}, '%')
+            </if>
+            <if test="moduleName != null and moduleName != ''">
+                AND module_name LIKE CONCAT('%', #{moduleName}, '%')
+            </if>
+            <if test="requestDepartment != null and requestDepartment != ''">
+                AND request_department LIKE CONCAT('%', #{requestDepartment}, '%')
+            </if>
+            <if test="productOwner != null and productOwner != ''">
+                AND product_owner LIKE CONCAT('%', #{productOwner}, '%')
+            </if>
+            <if test="priority != null and priority.size() > 0">
+                AND priority IN
+                <foreach collection="priority" item="p" open="(" separator="," close=")">
+                    #{p}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY status
+    </select>
 
     <select id="statsByDepartment" resultType="map">
         SELECT request_department AS name, COUNT(*) AS value
