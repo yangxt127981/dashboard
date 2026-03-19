@@ -58,6 +58,8 @@
             <when test="sortField == 'actualStartTime' and sortOrder == 'descending'">ORDER BY actual_start_time DESC</when>
             <when test="sortField == 'actualEndTime' and sortOrder == 'ascending'">ORDER BY actual_end_time ASC</when>
             <when test="sortField == 'actualEndTime' and sortOrder == 'descending'">ORDER BY actual_end_time DESC</when>
+            <when test="sortField == 'moduleName' and sortOrder == 'ascending'">ORDER BY module_name ASC</when>
+            <when test="sortField == 'moduleName' and sortOrder == 'descending'">ORDER BY module_name DESC</when>
             <when test="sortField == 'priority' and sortOrder == 'ascending'">ORDER BY CASE priority WHEN '紧急' THEN 1 WHEN '高' THEN 2 WHEN '中' THEN 3 WHEN '低' THEN 4 ELSE 5 END ASC</when>
             <when test="sortField == 'priority' and sortOrder == 'descending'">ORDER BY CASE priority WHEN '紧急' THEN 1 WHEN '高' THEN 2 WHEN '中' THEN 3 WHEN '低' THEN 4 ELSE 5 END DESC</when>
             <otherwise>ORDER BY CASE priority WHEN '紧急' THEN 1 WHEN '高' THEN 2 WHEN '中' THEN 3 WHEN '低' THEN 4 ELSE 5 END ASC</otherwise>

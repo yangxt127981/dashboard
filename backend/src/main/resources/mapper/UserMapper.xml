@@ -4,7 +4,7 @@
 <mapper namespace="com.dashboard.mapper.UserMapper">
 
     <select id="findByUsername" resultType="com.dashboard.entity.User">
-        SELECT id, username, password, role
+        SELECT id, username, password, role, role_id
         FROM user
         WHERE username = #{username}
     </select>

@@ -30,7 +30,7 @@ public class LoginLogController {
             HttpServletRequest request) {
 
         User user = (User) request.getAttribute("currentUser");
-        if (user == null || !"ADMIN".equals(user.getRole())) {
+        if (user == null || user.getPermissions() == null || !user.getPermissions().contains("system:login-log")) {
             return Result.error(403, "无权限操作");
         }
 

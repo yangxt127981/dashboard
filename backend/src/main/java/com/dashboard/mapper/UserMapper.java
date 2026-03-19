@@ -13,17 +13,17 @@ public interface UserMapper {
     void insertIoaUser(@Param("username") String username);
 
     // 查询非 IOA 用户（密码不为 IOA_SSO）
-    @Select("SELECT id, username, role FROM `user` WHERE password != 'IOA_SSO' ORDER BY id")
+    @Select("SELECT id, username, role, role_id FROM `user` WHERE password != 'IOA_SSO' ORDER BY id")
     List<User> findNonIoaUsers();
 
-    @Select("SELECT id, username, role FROM `user` WHERE id = #{id}")
+    @Select("SELECT id, username, role, role_id FROM `user` WHERE id = #{id}")
     User findById(Long id);
 
-    @Insert("INSERT INTO `user` (username, password, role) VALUES (#{username}, #{password}, #{role})")
+    @Insert("INSERT INTO `user` (username, password, role, role_id) VALUES (#{username}, #{password}, #{role}, #{roleId})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(User user);
 
-    @Update("<script>UPDATE `user` SET username=#{username}, role=#{role}" +
+    @Update("<script>UPDATE `user` SET username=#{username}, role=#{role}, role_id=#{roleId}" +
             "<if test='password != null and password != \"\"'>, password=#{password}</if>" +
             " WHERE id=#{id}</script>")
     void update(User user);

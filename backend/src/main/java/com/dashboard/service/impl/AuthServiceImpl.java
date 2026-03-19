@@ -5,6 +5,7 @@ import com.dashboard.entity.User;
 import com.dashboard.mapper.LoginLogMapper;
 import com.dashboard.mapper.UserMapper;
 import com.dashboard.service.AuthService;
+import com.dashboard.service.PermissionService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,13 +20,15 @@ public class AuthServiceImpl implements AuthService {
 
     private final UserMapper userMapper;
     private final LoginLogMapper loginLogMapper;
+    private final PermissionService permissionService;
     private final ConcurrentHashMap<String, User> tokenStore = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> tokenToLogId = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, LocalDateTime> tokenToLoginTime = new ConcurrentHashMap<>();
 
-    public AuthServiceImpl(UserMapper userMapper, LoginLogMapper loginLogMapper) {
+    public AuthServiceImpl(UserMapper userMapper, LoginLogMapper loginLogMapper, PermissionService permissionService) {
         this.userMapper = userMapper;
         this.loginLogMapper = loginLogMapper;
+        this.permissionService = permissionService;
     }
 
     @Override
@@ -34,6 +37,7 @@ public class AuthServiceImpl implements AuthService {
         if (user == null || !user.getPassword().equals(password)) {
             return null;
         }
+        user.setPermissions(permissionService.getPermissions(user));
         String token = UUID.randomUUID().toString();
         tokenStore.put(token, user);
         recordLogin(token, user.getUsername(), "账号密码", ip, userAgent);
@@ -42,6 +46,8 @@ public class AuthServiceImpl implements AuthService {
         result.put("token", token);
         result.put("username", user.getUsername());
         result.put("role", user.getRole());
+        result.put("roleId", user.getRoleId());
+        result.put("permissions", user.getPermissions());
         return result;
     }
 
@@ -67,6 +73,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void storeToken(String token, User user, String ip, String loginType, String userAgent) {
+        user.setPermissions(permissionService.getPermissions(user));
         tokenStore.put(token, user);
         recordLogin(token, user.getUsername(), loginType, ip, userAgent);
     }

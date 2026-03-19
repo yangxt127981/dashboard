@@ -78,6 +78,8 @@ public class AuthController {
         result.put("token", token);
         result.put("username", user.getUsername());
         result.put("role", user.getRole());
+        result.put("roleId", user.getRoleId());
+        result.put("permissions", user.getPermissions());
         return Result.success(result);
     }
 

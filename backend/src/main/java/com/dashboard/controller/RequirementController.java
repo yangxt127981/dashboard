@@ -57,7 +57,10 @@ public class RequirementController {
     }
 
     @GetMapping
-    public Result<?> list(RequirementQueryDTO query) {
+    public Result<?> list(RequirementQueryDTO query, HttpServletRequest request) {
+        if (!hasPermission(request, "requirement:view")) {
+            return Result.error(403, "无权限操作");
+        }
         PageInfo<Requirement> pageInfo = requirementService.getList(query);
         return Result.success(pageInfo);
     }
@@ -70,7 +73,7 @@ public class RequirementController {
 
     @PostMapping
     public Result<?> create(@RequestBody Requirement requirement, HttpServletRequest request) {
-        if (!isAdminOrManager(request)) {
+        if (!hasPermission(request, "requirement:create")) {
             return Result.error(403, "无权限操作");
         }
         try {
@@ -83,7 +86,7 @@ public class RequirementController {
 
     @PutMapping("/{id}")
     public Result<?> update(@PathVariable Long id, @RequestBody Requirement requirement, HttpServletRequest request) {
-        if (!isAdminOrManager(request)) {
+        if (!hasPermission(request, "requirement:edit")) {
             return Result.error(403, "无权限操作");
         }
         requirement.setId(id);
@@ -93,7 +96,7 @@ public class RequirementController {
 
     @DeleteMapping("/{id}")
     public Result<?> delete(@PathVariable Long id, HttpServletRequest request) {
-        if (!isAdmin(request)) {
+        if (!hasPermission(request, "requirement:delete")) {
             return Result.error(403, "无权限操作");
         }
         requirementService.delete(id, getOperator(request));
@@ -105,13 +108,8 @@ public class RequirementController {
         return user != null ? user.getUsername() : "unknown";
     }
 
-    private boolean isAdmin(HttpServletRequest request) {
+    private boolean hasPermission(HttpServletRequest request, String code) {
         User user = (User) request.getAttribute("currentUser");
-        return user != null && "ADMIN".equals(user.getRole());
-    }
-
-    private boolean isAdminOrManager(HttpServletRequest request) {
-        User user = (User) request.getAttribute("currentUser");
-        return user != null && ("ADMIN".equals(user.getRole()) || "MANAGER".equals(user.getRole()));
+        return user != null && user.getPermissions() != null && user.getPermissions().contains(code);
     }
 }

@@ -1,10 +1,10 @@
-# 项目计划看板系统 - Claude 上下文
+# ONE家项目计划看板 - Claude 上下文
 
 ## 项目概述
 
-内部项目需求看板系统，供信息部管理多部门需求，实现进度透明化。
+内部项目需求看板系统（ONE家项目计划看板），供信息部管理多部门需求，实现进度透明化。
 
-- **代码仓库**：https://github.com/yangxt127981/dashboard（当前版本: V5）
+- **代码仓库**：https://github.com/yangxt127981/dashboard（当前版本: V5.2）
 - **本地路径**：/Users/hansonyang/Project/dashboard
 - **生产地址**：http://47.103.56.254（阿里云）
 
@@ -56,7 +56,7 @@ npm run dev
 
 ---
 
-## 已实现功能（V5 完整版）
+## 已实现功能（V5.2 完整版）
 
 ### 登录鉴权
 - **账号密码登录**：POST `/api/auth/login`，返回 UUID Token
@@ -71,11 +71,11 @@ npm run dev
 
 ### 需求列表
 - 分页（PageHelper），默认每页 10 条
-- **Tab 页**：全部 / 进行中（设计中/开发中/测试中）/ 未开始 / 已上线 / 已取消
-- **筛选**：需求名称模糊搜索、部门下拉、优先级多选、状态多选（仅"全部"Tab 可用）、产品对接人模糊搜索
+- **Tab 页**：全部 / 进行中（设计中/开发中/测试中）/ 未开始 / 已上线 / 已取消，Tab 页签实时显示各状态记录数量
+- **筛选**：需求名称模糊搜索、部门下拉、所属模块筛选、优先级多选、状态多选（仅"全部"Tab 可用）、产品对接人模糊搜索；高级查询可折叠/展开
 - **排序**：优先级（紧急→高→中→低）、计划完成时间、实际完成时间、计划开始时间、实际开始时间（升降序），后端全局排序
 - **列配置**：可隐藏/显示列，配置持久化到 `localStorage`
-- 列表右上角有刷新按钮
+- 列表右上角有刷新按钮（Icon 形式）
 
 ### 需求字段
 需求名称、所属模块、需求方部门、需求对接人、产品对接人、优先级、计划开始、计划完成、实际开始、实际完成、状态、需求描述
@@ -107,6 +107,29 @@ npm run dev
 - 折叠/展开面板
 - 三维度饼图：部门分布、优先级分布、状态分布
 - 三图联动：点击部门图，另两图随之过滤；再次点击取消联动
+
+### 权限管理（V5.2 新增）
+基于 RBAC 模型，内置三个角色权限不可修改，支持自定义角色。
+
+- **权限点**：菜单和按钮均作为权限点（共 22 个），权限码如 `requirement:create`、`dept:delete` 等
+- **内置角色权限**（硬编码，不走数据库）：
+  - ADMIN：全部权限
+  - MANAGER：`board:view`、`requirement:create/edit/cancel`
+  - USER：`board:view`
+- **自定义角色**：在"角色管理"页面创建，可通过权限树勾选任意权限点
+- **用户关联角色**：内置角色通过 `user.role` 字段存储；自定义角色通过 `user.role_id` 关联 `sys_role`
+- **登录时权限下发**：后端计算权限集后随 token 一同返回 `permissions[]`，前端存入 Pinia + localStorage
+- **前端鉴权**：`authStore.hasPermission('code')` 控制按钮/菜单显隐；后端同步校验每个接口
+- **系统管理入口**：动态显示，用户拥有任意系统管理权限时显示对应菜单项
+
+### 系统管理（V5.1 新增）
+- **需求方部门维护**：部门字典增删改，排序可配置，下拉选项动态加载自数据库
+- **需求模块维护**：模块字典增删改，支持背景色配置
+- **用户管理**：非 IOA 用户增删改，可设置角色（ADMIN/MANAGER/USER），不可删除当前登录账号
+- **登录日志**：记录账号名、登录方式（账号密码/IOA）、IP、User-Agent、登录时间、退出时间、停留时长
+
+### 登录页（V5.1 更新）
+- 改为 IOA / 账号密码 双 Tab 切换，默认显示 IOA 登录
 
 ---
 
@@ -159,6 +182,36 @@ CREATE TABLE `requirement_log` (
     `after_content`    TEXT        COMMENT '变更后 JSON',
     `created_at`       DATETIME    DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 用户登录日志表（V5.1 新增）
+CREATE TABLE `login_log` (
+    `id`               BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    `username`         VARCHAR(50)  NOT NULL COMMENT '登录账号',
+    `login_type`       VARCHAR(20)  NOT NULL COMMENT '登录方式：账号密码/IOA',
+    `login_ip`         VARCHAR(50)           COMMENT '登录IP',
+    `user_agent`       VARCHAR(255)          COMMENT '浏览器信息',
+    `login_time`       DATETIME     NOT NULL COMMENT '登录时间',
+    `logout_time`      DATETIME              COMMENT '退出时间',
+    `duration_minutes` INT                   COMMENT '停留时长（分钟）',
+    `status`           VARCHAR(10)  NOT NULL DEFAULT '在线' COMMENT '在线/已退出'
+);
+
+-- 需求方部门字典表（V5.1 新增）
+CREATE TABLE `sys_department` (
+    `id`         BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    `name`       VARCHAR(100) NOT NULL COMMENT '部门名称',
+    `sort_order` INT          DEFAULT 0 COMMENT '排序',
+    `created_at` DATETIME     DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 需求模块字典表（V5.1 新增）
+CREATE TABLE `sys_module` (
+    `id`         BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    `name`       VARCHAR(100) NOT NULL COMMENT '模块名称',
+    `sort_order` INT          DEFAULT 0 COMMENT '排序',
+    `bg_color`   VARCHAR(20)  DEFAULT NULL COMMENT '背景色',
+    `created_at` DATETIME     DEFAULT CURRENT_TIMESTAMP
+);
 ```
 
 ---
@@ -180,6 +233,19 @@ CREATE TABLE `requirement_log` (
 | GET  | `/api/requirements/{id}/attachments` | 附件列表 | 已登录 |
 | POST | `/api/requirements/{id}/attachments` | 关联附件 | 已登录 |
 | DELETE | `/api/attachments/{id}` | 删除附件 | 已登录 |
+| GET    | `/api/dict/departments` | 部门字典列表 | 已登录 |
+| POST   | `/api/dict/departments` | 新增部门 | ADMIN |
+| PUT    | `/api/dict/departments/{id}` | 编辑部门 | ADMIN |
+| DELETE | `/api/dict/departments/{id}` | 删除部门 | ADMIN |
+| GET    | `/api/dict/modules` | 模块字典列表 | 已登录 |
+| POST   | `/api/dict/modules` | 新增模块 | ADMIN |
+| PUT    | `/api/dict/modules/{id}` | 编辑模块 | ADMIN |
+| DELETE | `/api/dict/modules/{id}` | 删除模块 | ADMIN |
+| GET    | `/api/system/users` | 用户列表（非IOA）| ADMIN |
+| POST   | `/api/system/users` | 新增用户 | ADMIN |
+| PUT    | `/api/system/users/{id}` | 编辑用户 | ADMIN |
+| DELETE | `/api/system/users/{id}` | 删除用户 | ADMIN |
+| GET    | `/api/system/login-logs` | 登录日志（分页+筛选）| ADMIN |
 
 ---
 
@@ -197,12 +263,21 @@ CREATE TABLE `requirement_log` (
 | `backend/.../controller/RequirementController.java` | 需求 CRUD + 日志 + 统计 |
 | `backend/.../controller/UploadController.java` | 文件上传 |
 | `backend/.../controller/AttachmentController.java` | 附件 CRUD |
+| `backend/.../controller/DictController.java` | 部门/模块字典 CRUD（V5.1）|
+| `backend/.../controller/UserController.java` | 用户管理 CRUD（V5.1）|
+| `backend/.../controller/LoginLogController.java` | 登录日志查询（V5.1）|
 | `backend/.../service/IoaService.java` | IOA CheckTicket（含 TrustAll SSL）|
-| `backend/.../service/impl/AuthServiceImpl.java` | Token 存储（ConcurrentHashMap）|
+| `backend/.../service/impl/AuthServiceImpl.java` | Token 存储 + 登录日志记录（ConcurrentHashMap）|
 | `backend/.../service/impl/RequirementServiceImpl.java` | 业务逻辑 + 日志记录 |
-| `frontend/src/views/Board.vue` | 主看板页（列表/筛选/Tab/弹窗/统计图全在此）|
-| `frontend/src/views/Login.vue` | 登录页（含 IOA 登录）|
+| `backend/.../mapper/SysDepartmentMapper.java` | 部门字典 Mapper（V5.1）|
+| `backend/.../mapper/SysModuleMapper.java` | 模块字典 Mapper（V5.1）|
+| `backend/.../mapper/LoginLogMapper.java` | 登录日志 Mapper（V5.1）|
+| `frontend/src/views/Board.vue` | 主看板页（列表/筛选/Tab/弹窗/统计图/系统管理全在此）|
+| `frontend/src/views/Login.vue` | 登录页（IOA/账号密码双Tab）|
 | `frontend/src/api/auth.js` | login / ioaLogin / logout |
+| `frontend/src/api/dict.js` | 部门/模块字典接口（V5.1）|
+| `frontend/src/api/user.js` | 用户管理接口（V5.1）|
+| `frontend/src/api/loginLog.js` | 登录日志接口（V5.1）|
 | `frontend/src/api/axios.js` | Axios 实例 + 全局 401 拦截 |
 | `frontend/src/stores/auth.js` | Pinia 登录状态（token/username/role）|
 | `frontend/public/login-bg.svg` | 登录页背景图（浅蓝科技风 SVG）|

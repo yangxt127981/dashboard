@@ -8,20 +8,21 @@
       </div>
       <div class="top-bar-right">
         <el-tag type="info" effect="plain" style="margin-right: 12px;">
-          {{ authStore.isAdmin() ? '管理员' : authStore.isManager() ? '编辑员' : '普通用户' }}
+          {{ roleBadgeLabel }}
         </el-tag>
         <span class="user-name">{{ authStore.username }}</span>
         <el-divider direction="vertical" />
-        <el-dropdown v-if="authStore.isAdmin()" style="margin-right: 8px;">
+        <el-dropdown v-if="hasAnySystemPermission" style="margin-right: 8px;">
           <el-button text type="primary">
             系统管理<el-icon class="el-icon--right"><ArrowDown /></el-icon>
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item @click="openDeptManage">需求方部门维护</el-dropdown-item>
-              <el-dropdown-item @click="openModuleManage">需求模块维护</el-dropdown-item>
-              <el-dropdown-item @click="openUserManage">用户管理</el-dropdown-item>
-              <el-dropdown-item divided @click="openLoginLog">登录日志</el-dropdown-item>
+              <el-dropdown-item v-if="authStore.hasPermission('system:dept')" @click="openDeptManage">需求方部门维护</el-dropdown-item>
+              <el-dropdown-item v-if="authStore.hasPermission('system:module')" @click="openModuleManage">需求模块维护</el-dropdown-item>
+              <el-dropdown-item v-if="authStore.hasPermission('system:user')" @click="openUserManage">用户管理</el-dropdown-item>
+              <el-dropdown-item v-if="authStore.hasPermission('system:login-log')" divided @click="openLoginLog">登录日志</el-dropdown-item>
+              <el-dropdown-item v-if="authStore.hasPermission('system:role')" divided @click="openRoleManage">角色管理</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -122,7 +123,7 @@
             <el-tab-pane :label="`已取消（${tabCounts.cancelled}）`" name="cancelled" />
           </el-tabs>
           <div class="table-toolbar">
-          <el-button v-if="authStore.canEdit()" type="primary" size="small" @click="openForm()">新增需求</el-button>
+          <el-button v-if="authStore.hasPermission('requirement:create')" type="primary" size="small" @click="openForm()">新增需求</el-button>
           <el-button size="small" @click="resetColumnOrder">重置列顺序</el-button>
           <el-popover placement="bottom-end" :width="220" trigger="click">
             <template #reference>
@@ -151,6 +152,7 @@
         </div>
 
         <el-table
+          v-if="authStore.hasPermission('requirement:view')"
           ref="tableRef"
           :data="tableData"
           v-loading="loading"
@@ -169,35 +171,42 @@
             :show-overflow-tooltip="col.showOverflowTooltip"
             :sortable="col.sortable"
           >
-            <template v-if="col.key === 'priority' || col.key === 'status'" #default="{ row }">
+            <template v-if="col.key === 'priority' || col.key === 'status' || col.key === 'moduleName'" #default="{ row }">
               <el-tag v-if="col.key === 'priority'" :type="priorityType(row.priority)" size="small" effect="plain">{{ row.priority }}</el-tag>
-              <el-tag v-else :type="statusType(row.status)" size="small">{{ row.status }}</el-tag>
+              <el-tag v-else-if="col.key === 'status'" :type="statusType(row.status)" size="small">{{ row.status }}</el-tag>
+              <span v-else-if="col.key === 'moduleName'">
+                <span v-if="row.moduleName && moduleColorMap[row.moduleName]"
+                  :style="{ background: moduleColorMap[row.moduleName], padding: '2px 8px', borderRadius: '3px', display: 'inline-block' }">
+                  {{ row.moduleName }}
+                </span>
+                <span v-else>{{ row.moduleName }}</span>
+              </span>
             </template>
           </el-table-column>
 
-          <el-table-column label="操作" :width="authStore.isAdmin() ? 270 : authStore.canEdit() ? 220 : 120" align="center" fixed="right">
+          <el-table-column label="操作" width="270" align="center" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" link size="small" @click="openDetail(row)">详情</el-button>
               <el-button type="info" link size="small" @click="openLog(row)">日志</el-button>
-              <template v-if="authStore.canEdit()">
-                <el-button type="primary" link size="small" @click="openForm(row)">编辑</el-button>
-                <el-popconfirm v-if="row.status !== '已取消'" title="确认取消该需求？" @confirm="handleCancel(row)">
-                  <template #reference>
-                    <el-button type="warning" link size="small">取消</el-button>
-                  </template>
-                </el-popconfirm>
-                <el-popconfirm v-if="authStore.isAdmin()" title="确认删除？" @confirm="handleDelete(row.id)">
-                  <template #reference>
-                    <el-button type="danger" link size="small">删除</el-button>
-                  </template>
-                </el-popconfirm>
-              </template>
+              <el-button v-if="authStore.hasPermission('requirement:edit')" type="primary" link size="small" @click="openForm(row)">编辑</el-button>
+              <el-popconfirm v-if="authStore.hasPermission('requirement:cancel') && row.status !== '已取消'" title="确认取消该需求？" @confirm="handleCancel(row)">
+                <template #reference>
+                  <el-button type="warning" link size="small">取消</el-button>
+                </template>
+              </el-popconfirm>
+              <el-popconfirm v-if="authStore.hasPermission('requirement:delete')" title="确认删除？" @confirm="handleDelete(row.id)">
+                <template #reference>
+                  <el-button type="danger" link size="small">删除</el-button>
+                </template>
+              </el-popconfirm>
             </template>
           </el-table-column>
         </el-table>
 
+        <div v-if="!authStore.hasPermission('requirement:view')" style="text-align:center; padding:60px 0; color:#999;">暂无查看权限</div>
+
         <!-- 分页 -->
-        <div class="pagination">
+        <div class="pagination" v-if="authStore.hasPermission('requirement:view')">
           <el-pagination
             v-model:current-page="query.page"
             v-model:page-size="query.size"
@@ -462,22 +471,23 @@
     <!-- 用户管理弹窗 -->
     <el-dialog v-model="userManageVisible" title="用户管理" width="640px" destroy-on-close>
       <div style="margin-bottom:12px;">
-        <el-button type="primary" size="small" @click="openUserForm()">新增用户</el-button>
+        <el-button v-if="authStore.hasPermission('user:create')" type="primary" size="small" @click="openUserForm()">新增用户</el-button>
       </div>
-      <el-table :data="userList" border size="small" v-loading="userLoading">
+      <div v-if="!authStore.hasPermission('user:view')" style="text-align:center; padding:40px 0; color:#999;">暂无查看权限</div>
+      <el-table v-if="authStore.hasPermission('user:view')" :data="userList" border size="small" v-loading="userLoading">
         <el-table-column prop="id" label="ID" width="60" />
         <el-table-column prop="username" label="用户名" />
-        <el-table-column prop="role" label="角色" width="100" align="center">
+        <el-table-column label="角色" width="120" align="center">
           <template #default="{ row }">
-            <el-tag :type="row.role === 'ADMIN' ? 'danger' : 'info'" size="small" effect="plain">
-              {{ row.role === 'ADMIN' ? '管理员' : '普通用户' }}
+            <el-tag :type="row.role === 'ADMIN' ? 'danger' : row.role === 'MANAGER' ? 'warning' : row.roleId ? 'success' : 'info'" size="small" effect="plain">
+              {{ userRoleLabel(row) }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="130" align="center">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="openUserForm(row)">编辑</el-button>
-            <el-popconfirm title="确认删除该用户？" @confirm="handleDeleteUser(row.id)">
+            <el-button v-if="authStore.hasPermission('user:edit')" text type="primary" size="small" @click="openUserForm(row)">编辑</el-button>
+            <el-popconfirm v-if="authStore.hasPermission('user:delete')" title="确认删除该用户？" @confirm="handleDeleteUser(row.id)">
               <template #reference>
                 <el-button text type="danger" size="small">删除</el-button>
               </template>
@@ -498,9 +508,11 @@
             :placeholder="userFormId ? '留空则不修改' : '请输入密码'" />
         </el-form-item>
         <el-form-item label="角色">
-          <el-select v-model="userForm.role" style="width:100%;">
+          <el-select v-model="userForm.roleCode" style="width:100%;">
             <el-option label="管理员 (ADMIN)" value="ADMIN" />
+            <el-option label="经理 (MANAGER)" value="MANAGER" />
             <el-option label="普通用户 (USER)" value="USER" />
+            <el-option v-for="r in allRoleOptions" :key="r.id" :label="r.name" :value="String(r.id)" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -562,41 +574,52 @@
     </el-dialog>
 
     <!-- 部门管理弹窗 -->
-    <el-dialog v-model="deptManageVisible" title="需求方部门维护" width="500px" destroy-on-close>
+    <el-dialog v-model="deptManageVisible" title="需求方部门维护" width="660px" destroy-on-close>
       <div style="margin-bottom:12px;">
-        <el-button type="primary" size="small" @click="openDictForm('dept')">新增部门</el-button>
+        <el-button v-if="authStore.hasPermission('dept:create')" type="primary" size="small" @click="openDictForm('dept')">新增部门</el-button>
       </div>
-      <el-table :data="deptList" size="small" border>
+      <div v-if="!authStore.hasPermission('dept:view')" style="text-align:center; padding:40px 0; color:#999;">暂无查看权限</div>
+      <el-table v-if="authStore.hasPermission('dept:view')" :data="deptList" size="small" border>
         <el-table-column prop="name" label="部门名称" />
-        <el-table-column prop="sortOrder" label="排序" width="70" />
-        <el-table-column label="操作" width="120" align="center">
+        <el-table-column prop="sortOrder" label="排序" width="80" align="center" />
+        <el-table-column label="操作" width="140" align="center">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="openDictForm('dept', row)">编辑</el-button>
-            <el-button text type="danger" size="small" @click="handleDeleteDict('dept', row.id)">删除</el-button>
+            <div style="white-space:nowrap;">
+              <el-button v-if="authStore.hasPermission('dept:edit')" text type="primary" size="small" @click="openDictForm('dept', row)">编辑</el-button>
+              <el-button v-if="authStore.hasPermission('dept:delete')" text type="danger" size="small" @click="handleDeleteDict('dept', row.id)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
     </el-dialog>
 
     <!-- 模块管理弹窗 -->
-    <el-dialog v-model="moduleManageVisible" title="需求模块维护" width="500px" destroy-on-close>
+    <el-dialog v-model="moduleManageVisible" title="需求模块维护" width="660px" destroy-on-close>
       <div style="margin-bottom:12px;">
-        <el-button type="primary" size="small" @click="openDictForm('module')">新增模块</el-button>
+        <el-button v-if="authStore.hasPermission('module:create')" type="primary" size="small" @click="openDictForm('module')">新增模块</el-button>
       </div>
-      <el-table :data="moduleList" size="small" border>
-        <el-table-column prop="name" label="模块名称" />
-        <el-table-column prop="sortOrder" label="排序" width="70" />
-        <el-table-column label="操作" width="120" align="center">
+      <div v-if="!authStore.hasPermission('module:view')" style="text-align:center; padding:40px 0; color:#999;">暂无查看权限</div>
+      <el-table v-if="authStore.hasPermission('module:view')" :data="moduleList" size="small" border>
+        <el-table-column prop="name" label="模块名称">
           <template #default="{ row }">
-            <el-button text type="primary" size="small" @click="openDictForm('module', row)">编辑</el-button>
-            <el-button text type="danger" size="small" @click="handleDeleteDict('module', row.id)">删除</el-button>
+            <span v-if="row.bgColor" :style="{ background: row.bgColor, padding: '2px 8px', borderRadius: '3px' }">{{ row.name }}</span>
+            <span v-else>{{ row.name }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="sortOrder" label="排序" width="80" align="center" />
+        <el-table-column label="操作" width="140" align="center">
+          <template #default="{ row }">
+            <div style="white-space:nowrap;">
+              <el-button v-if="authStore.hasPermission('module:edit')" text type="primary" size="small" @click="openDictForm('module', row)">编辑</el-button>
+              <el-button v-if="authStore.hasPermission('module:delete')" text type="danger" size="small" @click="handleDeleteDict('module', row.id)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
     </el-dialog>
 
     <!-- 部门/模块 新增编辑表单 -->
-    <el-dialog v-model="dictFormVisible" :title="dictFormTitle" width="380px" destroy-on-close>
+    <el-dialog v-model="dictFormVisible" :title="dictFormTitle" width="420px" destroy-on-close>
       <el-form :model="dictForm" label-width="80px">
         <el-form-item label="名称">
           <el-input v-model="dictForm.name" placeholder="请输入名称" />
@@ -604,10 +627,97 @@
         <el-form-item label="排序">
           <el-input-number v-model="dictForm.sortOrder" :min="0" :max="999" style="width:100%;" />
         </el-form-item>
+        <el-form-item v-if="dictFormType === 'module'" label="背景色">
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div
+              v-for="c in MODULE_COLORS"
+              :key="c.value"
+              :title="c.label"
+              @click="dictForm.bgColor = dictForm.bgColor === c.value ? '' : c.value"
+              :style="{
+                width: '28px', height: '28px', borderRadius: '4px',
+                background: c.value, cursor: 'pointer',
+                border: dictForm.bgColor === c.value ? '2px solid #333' : '2px solid transparent',
+                boxSizing: 'border-box'
+              }"
+            />
+            <el-button v-if="dictForm.bgColor" text type="danger" size="small" @click="dictForm.bgColor = ''">清除</el-button>
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dictFormVisible = false">取消</el-button>
         <el-button type="primary" @click="handleSaveDict">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 角色管理弹窗 -->
+    <el-dialog v-model="roleManageVisible" title="角色管理" width="860px" destroy-on-close>
+      <el-row :gutter="16" style="height:500px;">
+        <!-- 左侧角色列表 -->
+        <el-col :span="9" style="border-right:1px solid #eee; display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <span style="font-weight:600;">角色列表</span>
+            <el-button v-if="authStore.hasPermission('role:create')" type="primary" size="small" @click="openRoleForm()">新增</el-button>
+          </div>
+          <el-scrollbar style="flex:1;">
+            <div
+              v-for="r in roleList" :key="r.id"
+              :class="['role-item', { active: selectedRoleId === r.id }]"
+              @click="selectRole(r)"
+            >
+              <span>{{ r.name }}</span>
+              <span style="font-size:12px; color:#999; margin-left:6px;">({{ r.code }})</span>
+              <el-tag v-if="r.builtIn" size="small" type="info" effect="plain" style="margin-left:auto;">内置</el-tag>
+              <template v-else>
+                <el-button v-if="authStore.hasPermission('role:edit')" text type="primary" size="small" style="margin-left:auto;" @click.stop="openRoleForm(r)">编辑</el-button>
+                <el-popconfirm title="确认删除该角色？" @confirm="handleDeleteRole(r.id)">
+                  <template #reference>
+                    <el-button v-if="authStore.hasPermission('role:delete')" text type="danger" size="small" @click.stop>删除</el-button>
+                  </template>
+                </el-popconfirm>
+              </template>
+            </div>
+          </el-scrollbar>
+        </el-col>
+        <!-- 右侧权限树 -->
+        <el-col :span="15" style="display:flex; flex-direction:column;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <span style="font-weight:600;">{{ selectedRoleId ? '权限配置' : '请选择角色' }}</span>
+            <el-button v-if="selectedRoleId && !selectedRoleBuiltIn && authStore.hasPermission('role:edit')" type="primary" size="small" @click="saveRolePerms">保存权限</el-button>
+          </div>
+          <el-scrollbar v-if="selectedRoleId" style="flex:1;">
+            <el-tree
+              ref="permTreeRef"
+              :data="permTree"
+              show-checkbox
+              node-key="id"
+              :props="{ label: 'name', children: 'children', disabled: () => selectedRoleBuiltIn }"
+              :default-checked-keys="checkedPermIds"
+              :check-strictly="false"
+            />
+          </el-scrollbar>
+          <div v-else style="color:#999; text-align:center; margin-top:80px;">← 点击左侧角色查看权限</div>
+        </el-col>
+      </el-row>
+    </el-dialog>
+
+    <!-- 角色新增/编辑表单 -->
+    <el-dialog v-model="roleFormVisible" :title="roleFormId ? '编辑角色' : '新增角色'" width="420px" destroy-on-close>
+      <el-form :model="roleForm" label-width="80px">
+        <el-form-item label="角色名称">
+          <el-input v-model="roleForm.name" placeholder="如：销售经理" />
+        </el-form-item>
+        <el-form-item label="角色编码">
+          <el-input v-model="roleForm.code" placeholder="如：SALES_MGR（英文大写）" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="roleForm.remark" placeholder="可选" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="roleFormVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveRole">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -626,6 +736,8 @@ import { getAttachments, addAttachment, deleteAttachment } from '../api/attachme
 import { getDepartments, createDepartment, updateDepartment, deleteDepartment, getModules, createModule, updateModule, deleteModule } from '../api/dict.js'
 import { getLoginLogs } from '../api/loginLog.js'
 import { getUsers, createUser, updateUser, deleteUser } from '../api/user.js'
+import { getRoles, createRole, updateRole, deleteRole } from '../api/role.js'
+import { getPermissionTree, getRolePermissions, saveRolePermissions } from '../api/permission.js'
 import { useAuthStore } from '../stores/auth.js'
 import * as echarts from 'echarts'
 
@@ -633,10 +745,21 @@ const router = useRouter()
 const authStore = useAuthStore()
 const tableRef = ref()
 
+// 权限相关 computed
+const BUILT_IN_ROLE_LABELS = { ADMIN: '管理员', MANAGER: '经理', USER: '普通用户' }
+const roleBadgeLabel = computed(() => {
+  if (authStore.role) return BUILT_IN_ROLE_LABELS[authStore.role] || authStore.role
+  return '自定义角色'
+})
+const hasAnySystemPermission = computed(() =>
+  ['system:dept','system:module','system:user','system:login-log','system:role']
+    .some(p => authStore.hasPermission(p))
+)
+
 // 列定义
 const defaultColumns = [
-  { key: 'functionName',      label: '需求名称',   minWidth: 200, showOverflowTooltip: true, visible: true },
-  { key: 'moduleName',        label: '所属模块',   width: 110,   showOverflowTooltip: true, visible: true },
+  { key: 'functionName',      label: '需求名称',   minWidth: 300, showOverflowTooltip: true, visible: true },
+  { key: 'moduleName',        label: '所属模块',   width: 110,   showOverflowTooltip: true, visible: true, sortable: 'custom' },
   { key: 'requestDepartment', label: '需求方部门', width: 120,   showOverflowTooltip: true, visible: true },
   { key: 'requestOwner',      label: '需求对接人', width: 100,   visible: true },
   { key: 'productOwner',      label: '产品对接人', width: 100,   visible: true },
@@ -753,11 +876,14 @@ const priorityOptions = ['紧急', '高', '中', '低']
 const productOwnerOptions = ['刘秋诗', '赵轶群', '丁滢', 'Hanson']
 const departmentOptions = ref([])
 const moduleOptions = ref([])
+const moduleColorMap = ref({})
 
 async function loadDictOptions() {
   const [deptRes, moduleRes] = await Promise.all([getDepartments(), getModules()])
   departmentOptions.value = (deptRes.data || []).map(d => d.name)
-  moduleOptions.value = (moduleRes.data || []).map(m => m.name)
+  const modules = moduleRes.data || []
+  moduleOptions.value = modules.map(m => m.name)
+  moduleColorMap.value = Object.fromEntries(modules.filter(m => m.bgColor).map(m => [m.name, m.bgColor]))
 }
 
 function statusType(status) {
@@ -1083,11 +1209,30 @@ const userLoading = ref(false)
 const userList = ref([])
 const userFormVisible = ref(false)
 const userFormId = ref(null)
-const userForm = reactive({ username: '', password: '', role: 'USER' })
+const userForm = reactive({ username: '', password: '', roleCode: 'USER' })
+const allRoleOptions = ref([]) // 自定义角色列表（built_in=0）
+
+function userRoleLabel(row) {
+  if (row.role === 'ADMIN') return '管理员'
+  if (row.role === 'MANAGER') return '经理'
+  if (row.role === 'USER') return '普通用户'
+  if (row.roleId) {
+    const found = allRoleOptions.value.find(r => r.id === row.roleId)
+    return found ? found.name : '自定义角色'
+  }
+  return '未知'
+}
 
 async function openUserManage() {
   userManageVisible.value = true
-  await refreshUserList()
+  // 加载自定义角色选项（仅有新增/编辑用户权限时才需要）
+  if (authStore.hasPermission('user:create') || authStore.hasPermission('user:edit')) {
+    const res = await getRoles()
+    allRoleOptions.value = (res.data || []).filter(r => !r.builtIn)
+  }
+  if (authStore.hasPermission('user:view')) {
+    await refreshUserList()
+  }
 }
 
 async function refreshUserList() {
@@ -1104,19 +1249,27 @@ function openUserForm(row = null) {
   userFormId.value = row?.id ?? null
   userForm.username = row?.username ?? ''
   userForm.password = ''
-  userForm.role = row?.role ?? 'USER'
+  userForm.roleCode = row?.role ?? (row?.roleId ? String(row.roleId) : 'USER')
   userFormVisible.value = true
 }
 
 async function handleSaveUser() {
   if (!userForm.username.trim()) { ElMessage.error('用户名不能为空'); return }
   if (!userFormId.value && !userForm.password.trim()) { ElMessage.error('密码不能为空'); return }
-  const payload = { username: userForm.username, role: userForm.role }
+  const builtIn = ['ADMIN', 'MANAGER', 'USER']
+  const payload = { username: userForm.username }
+  if (builtIn.includes(userForm.roleCode)) {
+    payload.role = userForm.roleCode
+    payload.roleId = null
+  } else {
+    payload.role = null
+    payload.roleId = Number(userForm.roleCode)
+  }
   if (userForm.password.trim()) payload.password = userForm.password
   if (userFormId.value) {
     await updateUser(userFormId.value, payload)
   } else {
-    await createUser({ ...payload, password: userForm.password })
+    await createUser(payload)
   }
   ElMessage.success('保存成功')
   userFormVisible.value = false
@@ -1159,20 +1312,37 @@ const dictFormVisible = ref(false)
 const dictFormTitle = ref('')
 const dictFormType = ref('') // 'dept' | 'module'
 const dictFormId = ref(null)
-const dictForm = reactive({ name: '', sortOrder: 0 })
+const dictForm = reactive({ name: '', sortOrder: 0, bgColor: '' })
+
+const MODULE_COLORS = [
+  { label: '浅红', value: '#FFCCCC' },
+  { label: '浅橙', value: '#FFE0B2' },
+  { label: '浅黄', value: '#FFF9C4' },
+  { label: '浅绿', value: '#C8E6C9' },
+  { label: '浅青', value: '#B2EBF2' },
+  { label: '浅蓝', value: '#BBDEFB' },
+  { label: '浅紫', value: '#E1BEE7' },
+  { label: '浅粉', value: '#F8BBD0' },
+  { label: '浅灰', value: '#ECEFF1' },
+  { label: '薄荷', value: '#B2DFDB' },
+]
 const deptList = ref([])
 const moduleList = ref([])
 
 async function openDeptManage() {
-  const res = await getDepartments()
-  deptList.value = res.data || []
   deptManageVisible.value = true
+  if (authStore.hasPermission('dept:view')) {
+    const res = await getDepartments()
+    deptList.value = res.data || []
+  }
 }
 
 async function openModuleManage() {
-  const res = await getModules()
-  moduleList.value = res.data || []
   moduleManageVisible.value = true
+  if (authStore.hasPermission('module:view')) {
+    const res = await getModules()
+    moduleList.value = res.data || []
+  }
 }
 
 function openDictForm(type, row = null) {
@@ -1180,12 +1350,13 @@ function openDictForm(type, row = null) {
   dictFormId.value = row?.id ?? null
   dictForm.name = row?.name ?? ''
   dictForm.sortOrder = row?.sortOrder ?? 0
+  dictForm.bgColor = row?.bgColor ?? ''
   dictFormTitle.value = (row ? '编辑' : '新增') + (type === 'dept' ? '部门' : '模块')
   dictFormVisible.value = true
 }
 
 async function handleSaveDict() {
-  const payload = { name: dictForm.name, sortOrder: dictForm.sortOrder }
+  const payload = { name: dictForm.name, sortOrder: dictForm.sortOrder, bgColor: dictForm.bgColor || null }
   if (dictFormType.value === 'dept') {
     if (dictFormId.value) await updateDepartment(dictFormId.value, payload)
     else await createDepartment(payload)
@@ -1230,9 +1401,87 @@ onUnmounted(() => {
   priorityChart?.dispose()
   statusChart?.dispose()
 })
+
+// ===== 角色管理 =====
+const roleManageVisible = ref(false)
+const roleList = ref([])
+const selectedRoleId = ref(null)
+const selectedRoleBuiltIn = ref(false)
+const permTree = ref([])
+const checkedPermIds = ref([])
+const permTreeRef = ref()
+
+const roleFormVisible = ref(false)
+const roleFormId = ref(null)
+const roleForm = reactive({ name: '', code: '', remark: '' })
+
+async function openRoleManage() {
+  roleManageVisible.value = true
+  selectedRoleId.value = null
+  checkedPermIds.value = []
+  const [rolesRes, treeRes] = await Promise.all([getRoles(), getPermissionTree()])
+  roleList.value = rolesRes.data || []
+  permTree.value = treeRes.data || []
+}
+
+async function selectRole(role) {
+  selectedRoleId.value = role.id
+  selectedRoleBuiltIn.value = !!role.builtIn
+  const res = await getRolePermissions(role.id)
+  checkedPermIds.value = res.data || []
+}
+
+async function saveRolePerms() {
+  const checked = permTreeRef.value?.getCheckedKeys() || []
+  await saveRolePermissions(selectedRoleId.value, checked)
+  ElMessage.success('权限保存成功')
+}
+
+function openRoleForm(row = null) {
+  roleFormId.value = row?.id ?? null
+  roleForm.name = row?.name ?? ''
+  roleForm.code = row?.code ?? ''
+  roleForm.remark = row?.remark ?? ''
+  roleFormVisible.value = true
+}
+
+async function handleSaveRole() {
+  if (!roleForm.name.trim()) { ElMessage.error('角色名称不能为空'); return }
+  if (!roleForm.code.trim()) { ElMessage.error('角色编码不能为空'); return }
+  if (roleFormId.value) {
+    await updateRole(roleFormId.value, roleForm)
+  } else {
+    await createRole(roleForm)
+  }
+  ElMessage.success('保存成功')
+  roleFormVisible.value = false
+  const res = await getRoles()
+  roleList.value = res.data || []
+}
+
+async function handleDeleteRole(id) {
+  await deleteRole(id)
+  ElMessage.success('删除成功')
+  if (selectedRoleId.value === id) { selectedRoleId.value = null; checkedPermIds.value = [] }
+  const res = await getRoles()
+  roleList.value = res.data || []
+}
 </script>
 
 <style scoped>
+/* ── 角色管理列表项 ── */
+.role-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 4px;
+}
+.role-item:hover { background: #f0f5ff; }
+.role-item.active { background: #e6f0ff; font-weight: 600; color: #2d7cf6; }
+
 /* ── 工具栏图标 ── */
 .toolbar-icon {
   font-size: 17px;

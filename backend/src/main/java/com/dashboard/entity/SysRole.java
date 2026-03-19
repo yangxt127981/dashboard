@@ -4,10 +4,11 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class SysModule {
+public class SysRole {
     private Long id;
     private String name;
-    private Integer sortOrder;
-    private String bgColor;
+    private String code;
+    private Integer builtIn;
+    private String remark;
     private LocalDateTime createdAt;
 }
