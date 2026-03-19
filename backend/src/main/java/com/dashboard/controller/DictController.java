@@ -24,8 +24,7 @@ public class DictController {
     // ===== 部门 =====
 
     @GetMapping("/departments")
-    public Result<?> listDepts(HttpServletRequest request) {
-        if (!hasPermission(request, "dept:view")) return Result.error(403, "无权限操作");
+    public Result<?> listDepts() {
         return Result.success(deptMapper.findAll());
     }
 
@@ -56,8 +55,7 @@ public class DictController {
     // ===== 模块 =====
 
     @GetMapping("/modules")
-    public Result<?> listModules(HttpServletRequest request) {
-        if (!hasPermission(request, "module:view")) return Result.error(403, "无权限操作");
+    public Result<?> listModules() {
         return Result.success(moduleMapper.findAll());
     }
 

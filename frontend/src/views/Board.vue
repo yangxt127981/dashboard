@@ -1331,18 +1331,14 @@ const moduleList = ref([])
 
 async function openDeptManage() {
   deptManageVisible.value = true
-  if (authStore.hasPermission('dept:view')) {
-    const res = await getDepartments()
-    deptList.value = res.data || []
-  }
+  const res = await getDepartments()
+  deptList.value = res.data || []
 }
 
 async function openModuleManage() {
   moduleManageVisible.value = true
-  if (authStore.hasPermission('module:view')) {
-    const res = await getModules()
-    moduleList.value = res.data || []
-  }
+  const res = await getModules()
+  moduleList.value = res.data || []
 }
 
 function openDictForm(type, row = null) {
