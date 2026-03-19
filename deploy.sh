@@ -137,6 +137,8 @@ server {
     root /opt/dashboard/frontend;
     index index.html;
 
+    client_max_body_size 10m;
+
     location / {
         try_files $uri $uri/ /index.html;
     }
