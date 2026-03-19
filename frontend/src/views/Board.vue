@@ -342,7 +342,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="所属模块">
-              <el-select v-model="formData.moduleName" placeholder="请选择模块" clearable filterable allow-create style="width:100%;">
+              <el-select v-model="formData.moduleName" placeholder="请选择模块" clearable filterable style="width:100%;">
                 <el-option v-for="m in moduleOptions" :key="m" :label="m" :value="m" />
               </el-select>
             </el-form-item>
