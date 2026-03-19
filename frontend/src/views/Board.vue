@@ -349,7 +349,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="需求方部门">
-              <el-select v-model="formData.requestDepartment" placeholder="请选择需求方部门" clearable filterable allow-create style="width: 100%;">
+              <el-select v-model="formData.requestDepartment" placeholder="请选择需求方部门" clearable filterable style="width: 100%;">
                 <el-option v-for="d in departmentOptions" :key="d" :label="d" :value="d" />
               </el-select>
             </el-form-item>
