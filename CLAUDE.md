@@ -4,7 +4,7 @@
 
 内部项目需求看板系统（ONE家项目计划看板），供信息部管理多部门需求，实现进度透明化。
 
-- **代码仓库**：https://github.com/yangxt127981/dashboard（当前版本: V5.2）
+- **代码仓库**：https://github.com/yangxt127981/dashboard（当前版本: V5.3）
 - **本地路径**：/Users/hansonyang/Project/dashboard
 - **生产地址**：http://dashboard.meione.cc（阿里云 47.103.56.254）
 
@@ -56,7 +56,7 @@ npm run dev
 
 ---
 
-## 已实现功能（V5.2 完整版）
+## 已实现功能（V5.3 完整版）
 
 ### 登录鉴权
 - **账号密码登录**：POST `/api/auth/login`，返回 UUID Token
@@ -73,12 +73,12 @@ npm run dev
 - 分页（PageHelper），默认每页 10 条
 - **Tab 页**：全部 / 进行中（设计中/开发中/测试中）/ 未开始 / 已上线 / 已取消，Tab 页签实时显示各状态记录数量
 - **筛选**：需求名称模糊搜索、部门下拉（仅限下拉选取）、所属模块筛选、优先级多选、状态多选（仅"全部"Tab 可用）、产品对接人模糊搜索；高级查询可折叠/展开
-- **排序**：优先级（紧急→高→中→低）、计划完成时间、实际完成时间、计划开始时间、实际开始时间（升降序），后端全局排序
+- **排序**：优先级（紧急→高→中→低）、计划开始/完成时间、实际开始/完成时间、创建时间、更新时间（升降序），后端全局排序
 - **列配置**：可隐藏/显示列，配置持久化到 `localStorage`
 - 列表右上角有刷新按钮（Icon 形式）
 
 ### 需求字段
-需求名称、所属模块、需求方部门、需求对接人、产品对接人、优先级、计划开始、计划完成、实际开始、实际完成、状态、需求描述
+需求名称、所属模块、需求方部门、需求对接人、产品对接人、优先级、计划开始、计划完成、实际开始、实际完成、状态、需求描述、创建时间、更新时间
 
 优先级枚举：`紧急 / 高 / 中 / 低`
 状态枚举：`未开始 / 设计中 / 开发中 / 测试中 / 已上线 / 已取消`
@@ -98,7 +98,7 @@ npm run dev
 ### 图片附件
 - 上传：POST `/api/upload`，保存到 `uploads/` 目录
 - 限制：最多 **5 张**，仅支持 **PNG、JPG/JPEG** 格式，单文件 ≤ 10MB
-- 前端：`beforeUpload` 校验格式和数量，达 5 张隐藏上传按钮
+- 前端：`beforeUpload` 校验格式和数量，达 5 张隐藏上传按钮；支持 **Ctrl+V / Cmd+V 粘贴图片直接上传**（弹窗打开时监听 `paste` 事件）
 - 后端：校验 ContentType 仅允许 `image/png`、`image/jpeg`
 - 附件关联需求：`attachment` 表，支持多附件
 - 接口：GET/POST `/api/requirements/{id}/attachments`，DELETE `/api/attachments/{id}`
@@ -333,6 +333,6 @@ ioa:
 - **后端启动**：`cd /opt/dashboard && nohup java -jar dashboard-backend-1.0.0.jar --server.port=8080 > app.log 2>&1 &`
 - **前端**：静态文件在 `/opt/dashboard/frontend/`
 - **Nginx 配置**：`/etc/nginx/conf.d/dashboard.conf`，`client_max_body_size 10m`，`/api/` 和 `/uploads/` 反代到 `127.0.0.1:8080`
-- **数据库**：MySQL 8.0.44，首次执行 `init_prod.sql`，V5.2 升级执行 `migrate_v5.2.sql`
+- **数据库**：MySQL 8.0.44，首次执行 `init_prod.sql`，V5.2 升级执行 `migrate_v5.2.sql`；V5.3 无数据库变更
 - **注意**：`ALTER TABLE user ADD COLUMN IF NOT EXISTS` 在生产 MySQL 上语法报错，需直接用 `ADD COLUMN`
 - SSH 已配置密钥登录（免密码），账号 root@47.103.56.254
