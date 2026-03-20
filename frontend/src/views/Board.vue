@@ -18,11 +18,12 @@
           </el-button>
           <template #dropdown>
             <el-dropdown-menu>
+              <el-dropdown-item v-if="authStore.hasPermission('system:requestowner')" @click="openRequestOwnerManage">需求对接人维护</el-dropdown-item>
               <el-dropdown-item v-if="authStore.hasPermission('system:dept')" @click="openDeptManage">需求方部门维护</el-dropdown-item>
               <el-dropdown-item v-if="authStore.hasPermission('system:module')" @click="openModuleManage">需求模块维护</el-dropdown-item>
-              <el-dropdown-item v-if="authStore.hasPermission('system:user')" @click="openUserManage">用户管理</el-dropdown-item>
+              <el-dropdown-item v-if="authStore.hasPermission('system:user')" divided @click="openUserManage">用户管理</el-dropdown-item>
+              <el-dropdown-item v-if="authStore.hasPermission('system:role')" @click="openRoleManage">角色管理</el-dropdown-item>
               <el-dropdown-item v-if="authStore.hasPermission('system:login-log')" divided @click="openLoginLog">登录日志</el-dropdown-item>
-              <el-dropdown-item v-if="authStore.hasPermission('system:role')" divided @click="openRoleManage">角色管理</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -360,7 +361,9 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="需求对接人">
-              <el-input v-model="formData.requestOwner" placeholder="业务负责人" />
+              <el-select v-model="formData.requestOwner" placeholder="请选择需求对接人" clearable style="width: 100%;">
+                <el-option v-for="o in requestOwnerOptions" :key="o" :label="o" :value="o" />
+              </el-select>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -656,6 +659,45 @@
       </template>
     </el-dialog>
 
+    <!-- 需求对接人维护弹窗 -->
+    <el-dialog v-model="requestOwnerManageVisible" title="需求对接人维护" width="520px" destroy-on-close>
+      <div style="margin-bottom:12px;">
+        <el-button type="primary" size="small" @click="openRequestOwnerForm()">新增对接人</el-button>
+      </div>
+      <el-table :data="requestOwnerList" size="small" border>
+        <el-table-column prop="name" label="姓名" />
+        <el-table-column prop="sortOrder" label="排序" width="80" align="center" />
+        <el-table-column label="操作" width="140" align="center">
+          <template #default="{ row }">
+            <div style="white-space:nowrap;">
+              <el-button text type="primary" size="small" @click="openRequestOwnerForm(row)">编辑</el-button>
+              <el-popconfirm title="确认删除？" @confirm="handleDeleteRequestOwner(row.id)">
+                <template #reference>
+                  <el-button text type="danger" size="small">删除</el-button>
+                </template>
+              </el-popconfirm>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+
+    <!-- 需求对接人 新增/编辑表单 -->
+    <el-dialog v-model="requestOwnerFormVisible" :title="requestOwnerFormTitle" width="380px" destroy-on-close>
+      <el-form :model="requestOwnerForm" label-width="80px">
+        <el-form-item label="姓名">
+          <el-input v-model="requestOwnerForm.name" placeholder="请输入姓名" />
+        </el-form-item>
+        <el-form-item label="排序">
+          <el-input-number v-model="requestOwnerForm.sortOrder" :min="0" :max="999" style="width:100%;" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="requestOwnerFormVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveRequestOwner">保存</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 角色管理弹窗 -->
     <el-dialog v-model="roleManageVisible" title="角色管理" width="860px" destroy-on-close>
       <el-row :gutter="16" style="height:500px;">
@@ -738,7 +780,7 @@ import { getList, getStats, getTabCounts, create, update, remove } from '../api/
 import { logout } from '../api/auth.js'
 import { getLogs } from '../api/log.js'
 import { getAttachments, addAttachment, deleteAttachment } from '../api/attachment.js'
-import { getDepartments, createDepartment, updateDepartment, deleteDepartment, getModules, createModule, updateModule, deleteModule } from '../api/dict.js'
+import { getDepartments, createDepartment, updateDepartment, deleteDepartment, getModules, createModule, updateModule, deleteModule, getRequestOwners, createRequestOwner, updateRequestOwner, deleteRequestOwner } from '../api/dict.js'
 import { getLoginLogs } from '../api/loginLog.js'
 import { getUsers, createUser, updateUser, deleteUser } from '../api/user.js'
 import { getRoles, createRole, updateRole, deleteRole } from '../api/role.js'
@@ -757,7 +799,7 @@ const roleBadgeLabel = computed(() => {
   return '自定义角色'
 })
 const hasAnySystemPermission = computed(() =>
-  ['system:dept','system:module','system:user','system:login-log','system:role']
+  ['system:dept','system:module','system:user','system:login-log','system:role','system:requestowner']
     .some(p => authStore.hasPermission(p))
 )
 
@@ -884,13 +926,15 @@ const productOwnerOptions = ['刘秋诗', '赵轶群', '丁滢', 'Hanson', '张�
 const departmentOptions = ref([])
 const moduleOptions = ref([])
 const moduleColorMap = ref({})
+const requestOwnerOptions = ref([])
 
 async function loadDictOptions() {
-  const [deptRes, moduleRes] = await Promise.all([getDepartments(), getModules()])
+  const [deptRes, moduleRes, ownerRes] = await Promise.all([getDepartments(), getModules(), getRequestOwners()])
   departmentOptions.value = (deptRes.data || []).map(d => d.name)
   const modules = moduleRes.data || []
   moduleOptions.value = modules.map(m => m.name)
   moduleColorMap.value = Object.fromEntries(modules.filter(m => m.bgColor).map(m => [m.name, m.bgColor]))
+  requestOwnerOptions.value = (ownerRes.data || []).map(o => o.name)
 }
 
 function statusType(status) {
@@ -1453,6 +1497,48 @@ async function handleDeleteDict(type, id) {
     const res = await getModules()
     moduleList.value = res.data || []
   }
+  ElMessage.success('删除成功')
+  loadDictOptions()
+}
+
+// ===== 需求对接人维护 =====
+const requestOwnerManageVisible = ref(false)
+const requestOwnerList = ref([])
+const requestOwnerFormVisible = ref(false)
+const requestOwnerFormId = ref(null)
+const requestOwnerForm = reactive({ name: '', sortOrder: 0 })
+const requestOwnerFormTitle = ref('')
+
+async function openRequestOwnerManage() {
+  requestOwnerManageVisible.value = true
+  const res = await getRequestOwners()
+  requestOwnerList.value = res.data || []
+}
+
+function openRequestOwnerForm(row = null) {
+  requestOwnerFormId.value = row?.id ?? null
+  requestOwnerForm.name = row?.name ?? ''
+  requestOwnerForm.sortOrder = row?.sortOrder ?? 0
+  requestOwnerFormTitle.value = row ? '编辑需求对接人' : '新增需求对接人'
+  requestOwnerFormVisible.value = true
+}
+
+async function handleSaveRequestOwner() {
+  if (!requestOwnerForm.name.trim()) return ElMessage.warning('名称不能为空')
+  const payload = { name: requestOwnerForm.name, sortOrder: requestOwnerForm.sortOrder }
+  if (requestOwnerFormId.value) await updateRequestOwner(requestOwnerFormId.value, payload)
+  else await createRequestOwner(payload)
+  const res = await getRequestOwners()
+  requestOwnerList.value = res.data || []
+  requestOwnerFormVisible.value = false
+  ElMessage.success('保存成功')
+  loadDictOptions()
+}
+
+async function handleDeleteRequestOwner(id) {
+  await deleteRequestOwner(id)
+  const res = await getRequestOwners()
+  requestOwnerList.value = res.data || []
   ElMessage.success('删除成功')
   loadDictOptions()
 }

@@ -131,6 +131,18 @@ INSERT INTO `sys_permission` (`id`, `name`, `code`, `type`, `parent_id`, `sort_o
 (53, '删除角色',   'role:delete',         'BUTTON', 50,   3)
 ON DUPLICATE KEY UPDATE id=id;
 
+-- 需求对接人字典
+CREATE TABLE IF NOT EXISTS `sys_request_owner` (
+    `id`         BIGINT       PRIMARY KEY AUTO_INCREMENT,
+    `name`       VARCHAR(100) NOT NULL UNIQUE,
+    `sort_order` INT          DEFAULT 0,
+    `created_at` DATETIME     DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO `sys_request_owner` (`name`, `sort_order`) VALUES
+('张三', 0), ('李四', 1), ('王五', 2), ('赵六', 3), ('陈七', 4)
+ON DUPLICATE KEY UPDATE id=id;
+
 -- 示例数据
 INSERT INTO `requirement` (`function_name`, `module_name`, `request_department`, `request_owner`, `product_owner`, `priority`, `planned_start_time`, `planned_end_time`, `status`, `description`) VALUES
 ('用户登录功能', '权限模块', '信息部', '张三', '李四', '高', '2026-03-01', '2026-03-15', '已上线', '支持用户名密码登录'),

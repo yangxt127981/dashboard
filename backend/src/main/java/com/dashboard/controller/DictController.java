@@ -3,9 +3,11 @@ package com.dashboard.controller;
 import com.dashboard.common.Result;
 import com.dashboard.entity.SysDepartment;
 import com.dashboard.entity.SysModule;
+import com.dashboard.entity.SysRequestOwner;
 import com.dashboard.entity.User;
 import com.dashboard.mapper.SysDepartmentMapper;
 import com.dashboard.mapper.SysModuleMapper;
+import com.dashboard.mapper.SysRequestOwnerMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,10 +17,12 @@ public class DictController {
 
     private final SysDepartmentMapper deptMapper;
     private final SysModuleMapper moduleMapper;
+    private final SysRequestOwnerMapper requestOwnerMapper;
 
-    public DictController(SysDepartmentMapper deptMapper, SysModuleMapper moduleMapper) {
+    public DictController(SysDepartmentMapper deptMapper, SysModuleMapper moduleMapper, SysRequestOwnerMapper requestOwnerMapper) {
         this.deptMapper = deptMapper;
         this.moduleMapper = moduleMapper;
+        this.requestOwnerMapper = requestOwnerMapper;
     }
 
     // ===== 部门 =====
@@ -80,6 +84,37 @@ public class DictController {
     public Result<?> deleteModule(@PathVariable Long id, HttpServletRequest request) {
         if (!hasPermission(request, "module:delete")) return Result.error(403, "无权限操作");
         moduleMapper.deleteById(id);
+        return Result.success();
+    }
+
+    // ===== 需求对接人 =====
+
+    @GetMapping("/request-owners")
+    public Result<?> listRequestOwners() {
+        return Result.success(requestOwnerMapper.findAll());
+    }
+
+    @PostMapping("/request-owners")
+    public Result<?> createRequestOwner(@RequestBody SysRequestOwner owner, HttpServletRequest request) {
+        if (!hasPermission(request, "system:requestowner")) return Result.error(403, "无权限操作");
+        if (owner.getName() == null || owner.getName().isBlank()) return Result.error(400, "名称不能为空");
+        requestOwnerMapper.insert(owner);
+        return Result.success(owner.getId());
+    }
+
+    @PutMapping("/request-owners/{id}")
+    public Result<?> updateRequestOwner(@PathVariable Long id, @RequestBody SysRequestOwner owner, HttpServletRequest request) {
+        if (!hasPermission(request, "system:requestowner")) return Result.error(403, "无权限操作");
+        if (owner.getName() == null || owner.getName().isBlank()) return Result.error(400, "名称不能为空");
+        owner.setId(id);
+        requestOwnerMapper.update(owner);
+        return Result.success();
+    }
+
+    @DeleteMapping("/request-owners/{id}")
+    public Result<?> deleteRequestOwner(@PathVariable Long id, HttpServletRequest request) {
+        if (!hasPermission(request, "system:requestowner")) return Result.error(403, "无权限操作");
+        requestOwnerMapper.deleteById(id);
         return Result.success();
     }
 

@@ -11,3 +11,9 @@ export const getModules = () => http.get('/dict/modules')
 export const createModule = (data) => http.post('/dict/modules', data)
 export const updateModule = (id, data) => http.put(`/dict/modules/${id}`, data)
 export const deleteModule = (id) => http.delete(`/dict/modules/${id}`)
+
+// 需求对接人
+export const getRequestOwners = () => http.get('/dict/request-owners')
+export const createRequestOwner = (data) => http.post('/dict/request-owners', data)
+export const updateRequestOwner = (id, data) => http.put(`/dict/request-owners/${id}`, data)
+export const deleteRequestOwner = (id) => http.delete(`/dict/request-owners/${id}`)
