@@ -246,7 +246,7 @@
           <el-card shadow="never" class="log-card">
             <div class="log-header">
               <el-tag :type="logTagType(log.operationType)" size="small" effect="dark">{{ log.operationType }}</el-tag>
-              <span class="log-operator">{{ log.operator }}</span>
+              <span class="log-operator">{{ IOA_DISPLAY_NAMES[log.operator?.toUpperCase()] || log.operator }}</span>
             </div>
             <div class="log-body">
               <template v-if="log.operationType === '创建'">
