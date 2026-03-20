@@ -1251,14 +1251,24 @@ const STATUS_LIST = ['未开始','设计中','开发中','测试中','已上线'
 const PRIORITY_COLORS = { '紧急':'#f56c6c','高':'#e6a23c','中':'#409eff','低':'#909399' }
 const STATUS_COLORS   = { '未开始':'#909399','设计中':'#e6a23c','开发中':'#409eff','测试中':'#67c23a','已上线':'#67c23a','已取消':'#f56c6c' }
 
-function buildPieOption(title, data, colorMap, manyItems = false) {
+function buildPieOption(title, data, colorMap, manyItems = false, total = null) {
   const filtered = data.filter(d => d.value > 0)
   const center = manyItems ? ['50%', '54%'] : ['50%', '54%']
   const radius = manyItems ? ['30%', '52%'] : ['32%', '55%']
+  const graphic = total != null ? [{
+    type: 'group',
+    left: 'center',
+    top: 'center',
+    children: [
+      { type: 'text', style: { text: '需求总数', fill: '#999', fontSize: 11, textAlign: 'center' }, top: -14 },
+      { type: 'text', style: { text: String(total), fill: '#1d2129', fontSize: 20, fontWeight: 'bold', textAlign: 'center' }, top: 4 }
+    ]
+  }] : []
   return {
     title: { text: title, left: 'center', top: 8, textStyle: { fontSize: 13, fontWeight: 600, color: '#1d2129' } },
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
     legend: { show: false },
+    graphic,
     series: [{
       type: 'pie',
       radius,
@@ -1312,7 +1322,8 @@ async function fetchStats(dept) {
 
   const suffix = dept ? `（${dept}）` : ''
   priorityChart?.setOption(buildPieOption(`优先级分布统计${suffix}`, priData, PRIORITY_COLORS))
-  statusChart?.setOption(buildPieOption(`状态分布统计${suffix}`, statusData, STATUS_COLORS))
+  const statusTotal = statusData.reduce((sum, d) => sum + d.value, 0)
+  statusChart?.setOption(buildPieOption(`状态分布统计${suffix}`, statusData, STATUS_COLORS, false, statusTotal))
 }
 
 function initCharts() {
