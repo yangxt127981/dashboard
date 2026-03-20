@@ -361,7 +361,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="需求对接人">
-              <el-select v-model="formData.requestOwner" placeholder="请选择需求对接人" clearable style="width: 100%;">
+              <el-select v-model="formData.requestOwner" placeholder="请选择需求对接人" multiple collapse-tags collapse-tags-tooltip clearable style="width: 100%;">
                 <el-option v-for="o in requestOwnerOptions" :key="o" :label="o" :value="o" />
               </el-select>
             </el-form-item>
@@ -806,7 +806,7 @@ const hasAnySystemPermission = computed(() =>
 // 列定义
 const defaultColumns = [
   { key: 'functionName',      label: '需求名称',   minWidth: 300, showOverflowTooltip: true, visible: true },
-  { key: 'moduleName',        label: '所属模块',   width: 110,   showOverflowTooltip: true, visible: true, sortable: 'custom' },
+  { key: 'moduleName',        label: '所属模块',   width: 130,   showOverflowTooltip: true, visible: true, sortable: 'custom' },
   { key: 'requestDepartment', label: '需求方部门', width: 120,   showOverflowTooltip: true, visible: true },
   { key: 'requestOwner',      label: '需求对接人', width: 100,   visible: true },
   { key: 'productOwner',      label: '产品对接人', width: 100,   visible: true },
@@ -1156,7 +1156,7 @@ const emptyForm = () => ({
   functionName: '',
   moduleName: '',
   requestDepartment: '',
-  requestOwner: '',
+  requestOwner: [],
   productOwner: '',
   priority: '中',
   status: '未开始',
@@ -1180,6 +1180,7 @@ function openForm(row = null) {
   if (row) {
     editingId.value = row.id
     Object.assign(formData, row)
+    formData.requestOwner = row.requestOwner ? row.requestOwner.split(',').map(s => s.trim()).filter(Boolean) : []
     loadAttachments(row.id)
   } else {
     editingId.value = null
@@ -1191,11 +1192,12 @@ async function handleSubmit() {
   await dialogFormRef.value.validate()
   submitting.value = true
   try {
+    const payload = { ...formData, requestOwner: Array.isArray(formData.requestOwner) ? formData.requestOwner.join(',') : formData.requestOwner }
     let requirementId = editingId.value
     if (requirementId) {
-      await update(requirementId, formData)
+      await update(requirementId, payload)
     } else {
-      const res = await create(formData)
+      const res = await create(payload)
       requirementId = res.data
     }
     // 处理附件
