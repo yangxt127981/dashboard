@@ -340,11 +340,13 @@
     >
       <el-form :model="formData" :rules="formRules" ref="dialogFormRef" label-width="110px">
         <el-row :gutter="16">
-          <el-col :span="12">
+          <el-col :span="24">
             <el-form-item label="需求名称" prop="functionName">
               <el-input v-model="formData.functionName" placeholder="请输入需求名称" />
             </el-form-item>
           </el-col>
+        </el-row>
+        <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="所属模块">
               <el-select v-model="formData.moduleName" placeholder="请选择模块" clearable filterable style="width:100%;">
@@ -467,6 +469,7 @@
                   </div>
                 </el-upload>
               </div>
+              <div class="upload-tip"><el-icon style="vertical-align: -2px; margin-right: 3px;"><InfoFilled /></el-icon>最多上传 5 张，每张不超过 10MB，支持 PNG / JPG；可直接 Ctrl+V 粘贴图片上传</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -773,7 +776,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, Plus, ArrowDown, Setting, Refresh } from '@element-plus/icons-vue'
+import { Search, Plus, ArrowDown, Setting, Refresh, InfoFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import Sortable from 'sortablejs'
 import { getList, getStats, getTabCounts, create, update, remove } from '../api/requirement.js'
@@ -1528,8 +1531,10 @@ function openRequestOwnerForm(row = null) {
 async function handleSaveRequestOwner() {
   if (!requestOwnerForm.name.trim()) return ElMessage.warning('名称不能为空')
   const payload = { name: requestOwnerForm.name, sortOrder: requestOwnerForm.sortOrder }
-  if (requestOwnerFormId.value) await updateRequestOwner(requestOwnerFormId.value, payload)
-  else await createRequestOwner(payload)
+  try {
+    if (requestOwnerFormId.value) await updateRequestOwner(requestOwnerFormId.value, payload)
+    else await createRequestOwner(payload)
+  } catch { return }
   const res = await getRequestOwners()
   requestOwnerList.value = res.data || []
   requestOwnerFormVisible.value = false
@@ -2041,6 +2046,13 @@ async function handleDeleteRole(id) {
   position: absolute;
   top: -6px;
   right: -6px;
+}
+
+.upload-tip {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.5;
 }
 
 .upload-trigger {
