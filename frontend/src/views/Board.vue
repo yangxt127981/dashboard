@@ -1253,21 +1253,31 @@ const STATUS_COLORS   = { '未开始':'#909399','设计中':'#e6a23c','开发中
 
 function buildPieOption(title, data, colorMap, manyItems = false) {
   const filtered = data.filter(d => d.value > 0)
-  const legendOpt = manyItems
-    ? { type: 'scroll', orient: 'horizontal', bottom: 0, textStyle: { fontSize: 11 } }
-    : { orient: 'vertical', right: 10, top: 'middle', textStyle: { fontSize: 11 } }
-  const center = manyItems ? ['50%', '46%'] : ['38%', '55%']
+  const center = manyItems ? ['50%', '54%'] : ['50%', '54%']
+  const radius = manyItems ? ['30%', '52%'] : ['32%', '55%']
   return {
     title: { text: title, left: 'center', top: 8, textStyle: { fontSize: 13, fontWeight: 600, color: '#1d2129' } },
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-    legend: legendOpt,
+    legend: { show: false },
     series: [{
       type: 'pie',
-      radius: ['38%', '62%'],
+      radius,
       center,
       data: filtered,
-      label: { show: false },
-      emphasis: { label: { show: true, fontSize: 12 } },
+      label: {
+        show: true,
+        position: 'outside',
+        formatter: (params) => `${params.name} ${params.value} (${params.percent}%)`,
+        fontSize: 11,
+        color: '#555',
+        overflow: 'truncate',
+        width: 90
+      },
+      labelLine: { show: true, length: 10, length2: 14 },
+      emphasis: {
+        label: { fontSize: 12, fontWeight: 'bold' },
+        itemStyle: { shadowBlur: 8, shadowColor: 'rgba(0,0,0,0.2)' }
+      },
       itemStyle: {
         color: colorMap ? (params) => colorMap[params.name] || undefined : undefined
       }
