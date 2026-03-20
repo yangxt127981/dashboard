@@ -84,7 +84,9 @@
               </el-select>
             </el-col>
             <el-col :span="4">
-              <el-input v-model="query.productOwner" placeholder="产品对接人" clearable style="width: 100%;" />
+              <el-select v-model="query.productOwner" placeholder="产品对接人" clearable style="width: 100%;">
+                <el-option v-for="p in productOwnerOptions" :key="p" :label="p" :value="p" />
+              </el-select>
             </el-col>
             <el-col :span="7" style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
               <el-button type="primary" @click="fetchList">查询</el-button>
