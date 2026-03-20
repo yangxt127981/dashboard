@@ -308,7 +308,8 @@
         <el-descriptions-item label="计划完成时间">{{ detailData.plannedEndTime || '—' }}</el-descriptions-item>
         <el-descriptions-item label="实际开始时间">{{ detailData.actualStartTime || '—' }}</el-descriptions-item>
         <el-descriptions-item label="实际完成时间">{{ detailData.actualEndTime || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="需求描述" :span="2">
+        <el-descriptions-item label="期望上线日期">{{ detailData.expectedOnlineDate || '—' }}</el-descriptions-item>
+        <el-descriptions-item label="需求价值" :span="2">
           <span style="white-space: pre-wrap;">{{ detailData.description || '—' }}</span>
         </el-descriptions-item>
         <el-descriptions-item v-if="detailAttachments.length > 0" label="图片附件" :span="2">
@@ -410,7 +411,7 @@
             </el-form-item>
           </el-col>
           <el-col :span="24">
-            <el-form-item label="需求描述">
+            <el-form-item label="需求价值">
               <el-input v-model="formData.description" type="textarea" :rows="3" placeholder="请输入需求详细描述" />
             </el-form-item>
           </el-col>
@@ -821,7 +822,8 @@ const defaultColumns = [
   { key: 'plannedEndTime',    label: '计划完成',   width: 125,   sortable: 'custom', visible: true },
   { key: 'actualStartTime',   label: '实际开始',   width: 125,   sortable: 'custom', visible: true },
   { key: 'actualEndTime',     label: '实际完成',   width: 125,   sortable: 'custom', visible: true },
-  { key: 'description',       label: '需求描述',   minWidth: 150, showOverflowTooltip: true, visible: true },
+  { key: 'expectedOnlineDate', label: '期望上线',   width: 125,   visible: true },
+  { key: 'description',       label: '需求价值',   minWidth: 150, showOverflowTooltip: true, visible: true },
   { key: 'createdAt',         label: '创建时间',   width: 165,   sortable: 'custom', visible: true },
   { key: 'updatedAt',         label: '更新时间',   width: 165,   sortable: 'custom', visible: true },
 ]
@@ -1015,7 +1017,7 @@ const LOG_FIELD_MAP = {
   plannedEndTime: '计划完成时间',
   actualStartTime: '实际开始时间',
   actualEndTime: '实际完成时间',
-  description: '需求描述'
+  description: '需求价值'
 }
 
 function logTagType(type) {

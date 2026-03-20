@@ -17,6 +17,7 @@
         <result property="actualEndTime" column="actual_end_time"/>
         <result property="status" column="status"/>
         <result property="description" column="description"/>
+        <result property="expectedOnlineDate" column="expected_online_date"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
@@ -98,6 +99,7 @@
             <if test="actualEndTime != null">actual_end_time = #{actualEndTime},</if>
             <if test="status != null">status = #{status},</if>
             <if test="description != null">description = #{description},</if>
+            expected_online_date = #{expectedOnlineDate},
         </set>
         WHERE id = #{id}
     </update>

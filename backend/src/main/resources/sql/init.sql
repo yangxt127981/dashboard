@@ -22,8 +22,9 @@ CREATE TABLE IF NOT EXISTS `requirement` (
     `planned_end_time`    DATE         COMMENT '计划完成时间',
     `actual_start_time`   DATE         COMMENT '实际开始时间',
     `actual_end_time`     DATE         COMMENT '实际完成时间',
+    `expected_online_date` DATE        COMMENT '期望上线日期',
     `status`              VARCHAR(20)  NOT NULL DEFAULT '未开始' COMMENT '状态：未开始/设计中/开发中/测试中/已上线',
-    `description`         TEXT         COMMENT '需求描述',
+    `description`         TEXT         COMMENT '需求价值',
     `created_at`          DATETIME     DEFAULT CURRENT_TIMESTAMP,
     `updated_at`          DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='需求表';

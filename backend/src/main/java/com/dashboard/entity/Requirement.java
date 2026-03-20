@@ -19,6 +19,7 @@ public class Requirement {
     private LocalDate actualEndTime;
     private String status;
     private String description;
+    private LocalDate expectedOnlineDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
