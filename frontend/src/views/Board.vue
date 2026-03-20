@@ -363,7 +363,7 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="需求对接人">
-              <el-select v-model="formData.requestOwner" placeholder="请选择需求对接人" multiple collapse-tags collapse-tags-tooltip clearable style="width: 100%;">
+              <el-select v-model="formData.requestOwner" placeholder="请选择需求对接人" multiple collapse-tags collapse-tags-tooltip clearable filterable style="width: 100%;">
                 <el-option v-for="o in requestOwnerOptions" :key="o" :label="o" :value="o" />
               </el-select>
             </el-form-item>
