@@ -10,7 +10,7 @@
         <el-tag type="info" effect="plain" style="margin-right: 12px;">
           {{ roleBadgeLabel }}
         </el-tag>
-        <span class="user-name">{{ authStore.username }}</span>
+        <span class="user-name">{{ displayUsername }}</span>
         <el-divider direction="vertical" />
         <el-dropdown v-if="hasAnySystemPermission" style="margin-right: 8px;">
           <el-button text type="primary">
@@ -797,6 +797,8 @@ const tableRef = ref()
 
 // 权限相关 computed
 const BUILT_IN_ROLE_LABELS = { ADMIN: '管理员', MANAGER: '经理', USER: '普通用户' }
+const IOA_DISPLAY_NAMES = { M81496: '刘秋诗', M20506: '赵轶群', M00828: '丁滢' }
+const displayUsername = computed(() => IOA_DISPLAY_NAMES[authStore.username?.toUpperCase()] || authStore.username)
 const roleBadgeLabel = computed(() => {
   if (authStore.role) return BUILT_IN_ROLE_LABELS[authStore.role] || authStore.role
   return '自定义角色'
