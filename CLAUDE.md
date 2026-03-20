@@ -4,7 +4,7 @@
 
 内部项目需求看板系统（ONE家项目计划看板），供信息部管理多部门需求，实现进度透明化。
 
-- **代码仓库**：https://github.com/yangxt127981/dashboard（当前版本: V5.7）
+- **代码仓库**：https://github.com/yangxt127981/dashboard（当前版本: V6.0）
 - **本地路径**：/Users/hansonyang/Project/dashboard
 - **生产地址**：http://dashboard.meione.cc（阿里云 47.103.56.254）
 
@@ -56,7 +56,7 @@ npm run dev
 
 ---
 
-## 已实现功能（V5.7 完整版）
+## 已实现功能（V6.0 完整版）
 
 ### 登录鉴权
 - **账号密码登录**：POST `/api/auth/login`，返回 UUID Token
@@ -66,10 +66,10 @@ npm run dev
   - 首次登录自动创建 USER 角色账号
   - 特定 IOA 用户自动升级为 MANAGER 角色
 - **登出**：POST `/api/auth/logout`，Token 失效
-- Token 存内存 `ConcurrentHashMap`，由 `AuthInterceptor` 拦截所有 `/api/**`（除 `/api/auth/**`）
+- Token 存内存 `ConcurrentHashMap`，由 `AuthInterceptor` 拦截所有 `/api/**`（除 `/api/auth/**`），包含 `/api/inbox/**`
 - **RBAC 权限**：登录时计算权限集合随 token 一起返回 `permissions[]`，前端存 Pinia + localStorage；前端按钮/菜单 v-if 隐藏 + 后端接口双重校验
 
-### 需求列表
+### 需求列表（需求进度）
 - 分页（PageHelper），默认每页 10 条
 - **Tab 页**：全部 / 进行中（设计中/开发中/测试中）/ 未开始 / 已上线 / 已取消，Tab 页签实时显示各状态记录数量
 - **筛选**：需求名称模糊搜索、部门下拉（仅限下拉选取）、所属模块筛选、优先级多选、状态多选（仅"全部"Tab 可用）、产品对接人下拉选择；高级查询可折叠/展开
@@ -78,7 +78,7 @@ npm run dev
 - 列表右上角有刷新按钮（Icon 形式）
 
 ### 需求字段
-需求名称、所属模块、需求方部门、需求对接人、产品对接人、优先级、计划开始、计划完成、实际开始、实际完成、状态、需求描述、创建时间、更新时间
+需求名称、所属模块、需求方部门、需求对接人、产品对接人、优先级、计划开始、计划完成、实际开始、实际完成、状态、需求价值（description）、期望上线日期、创建时间、更新时间
 
 优先级枚举：`紧急 / 高 / 中 / 低`
 状态枚举：`未开始 / 设计中 / 开发中 / 测试中 / 已上线 / 已取消`
@@ -87,15 +87,16 @@ npm run dev
 
 需求方部门：从 `sys_department` 数据库动态加载，**只能从下拉选项选取，不允许自定义输入**
 
-需求对接人：从 `sys_request_owner` 数据库动态加载，**支持多选**，存储为逗号分隔字符串，**只能从下拉选项选取**
+需求对接人：从 `sys_request_owner` 数据库动态加载，**支持多选**，存储为逗号分隔字符串，**只能从下拉选项选取**；新建需求时自动预填当前用户（若存在于对接人列表中）
 
-### 需求 CRUD
+### 需求 CRUD（需求进度）
 权限由 `sys_permission` 权限点控制，前端 v-if 隐藏 + 后端接口校验：
 - 新增需求：需 `requirement:create` 权限
 - 编辑需求：需 `requirement:edit` 权限
 - 取消需求：需 `requirement:cancel` 权限（操作栏"取消"按钮，已取消需求不显示）
 - 删除需求：需 `requirement:delete` 权限（仅 ADMIN 内置此权限）
 - 需求名称（`functionName`）有非空校验，空值返回 400
+- 需求进度列表只显示 `submission_status IS NULL` 或 `= '进入需求池'` 的记录
 
 ### 需求详情
 - 操作栏"详情"按钮，所有登录用户可见
@@ -111,7 +112,7 @@ npm run dev
 - 接口：GET/POST `/api/requirements/{id}/attachments`，DELETE `/api/attachments/{id}`
 - 生产 Nginx 配置 `client_max_body_size 10m`，Spring Boot `max-file-size: 10MB`
 
-### 操作日志
+### 操作日志（需求进度）
 - 每次创建、编辑、删除、取消自动记录日志
 - 日志含：操作人、操作类型、变更前/后内容（JSON 差异对比）
 - 操作栏"日志"按钮，所有登录用户可见
@@ -124,6 +125,67 @@ npm run dev
 - 状态分布统计：甜甜圈中心显示需求总数
 - **三图联动**：点击部门图，优先级图和状态图随之过滤；再次点击取消联动
 
+### 需求提报（V6.0 新增）
+
+独立页面 `/inbox`，路由对应 `InboxBoard.vue`，侧边栏入口「需求提报」。
+
+**提报状态流转**：
+```
+已创建 → 待评估 → 进入需求池
+                ↘ 已驳回 → 已取消
+```
+
+**submission_status 字段说明**：
+- `NULL` 或 `进入需求池`：在需求进度列表显示
+- 其余状态（已创建/待评估/已驳回/已取消）：仅在需求提报列表显示
+
+**数据权限**：
+- ADMIN / MANAGER：查看所有人的提报需求
+- USER：只能查看自己提报的需求（`submitted_by = username`）
+
+**按钮权限矩阵**（`InboxBoard.vue`）：
+
+| 提报状态 | 可见按钮 |
+|---------|---------|
+| 已创建 | 详情、日志、编辑、提交（非MANAGER）、删除 |
+| 待评估 | 详情、日志、撤销（非MANAGER）、需求评估（MANAGER/ADMIN）|
+| 已驳回 | 详情、日志、编辑、提交、取消 |
+| 进入需求池 / 已取消 | 详情、日志 |
+
+**ADMIN 特权**：编辑、删除按钮不受提报状态限制，任意状态均可操作。
+
+**新建/编辑表单字段**：需求名称（必填）、所属模块、需求方部门、需求对接人（多选，新建时预填当前用户）、产品对接人、优先级、期望上线日期、需求价值（必填）、图片附件
+
+**重名校验**：创建时检查 `functionName` 唯一性，重复返回 400 友好提示
+
+**评估流程（MANAGER/ADMIN）**：
+1. 点击「需求评估」弹出评估弹框，选择通过/驳回
+2. 通过后自动弹出「完善需求信息」弹框（包含需求进度全部字段）
+3. 确认后调 `PUT /api/requirements/{id}` 更新，需求进入需求进度列表
+
+**操作日志**：每次创建、编辑、删除、提交、撤销、评估、取消均记录日志，接口：GET `/api/inbox/{id}/logs`
+
+**后端接口**（`InboxController.java`，路径前缀 `/api/inbox`）：
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/inbox` | 提报列表（分页，支持筛选/排序）|
+| GET | `/api/inbox/tab-counts` | 各提报状态数量 |
+| POST | `/api/inbox` | 新建提报需求 |
+| PUT | `/api/inbox/{id}` | 编辑提报需求 |
+| DELETE | `/api/inbox/{id}` | 删除提报需求 |
+| POST | `/api/inbox/{id}/submit` | 提交评估（已创建/已驳回→待评估）|
+| POST | `/api/inbox/{id}/withdraw` | 撤回（待评估→已创建）|
+| POST | `/api/inbox/{id}/evaluate` | 评估（待评估→进入需求池/已驳回）|
+| POST | `/api/inbox/{id}/archive` | 取消（已驳回→已取消）|
+| GET | `/api/inbox/{id}/logs` | 操作日志 |
+
+**共享工具函数**（`frontend/src/utils/format.js`）：
+- `IOA_DISPLAY_NAMES`：IOA账号→中文名映射（M81496→刘秋诗等）
+- `displayName(name)`：显示名称（IOA账号转换或原值）
+- `priorityType(p)`：优先级→Element Plus tag 类型
+- `formatDatetime(val)`：日期时间格式化
+
 ### 权限管理（V5.2+）
 基于 RBAC 模型，内置三个角色权限硬编码不可修改，支持创建自定义角色。
 
@@ -131,7 +193,7 @@ npm run dev
 | 角色 | 权限 |
 |------|------|
 | ADMIN | 全部权限点 |
-| MANAGER | `board:view`、`requirement:view/create/edit/cancel`、`system:requestowner` |
+| MANAGER | `board:view`、`requirement:view/create/edit/cancel`、`system:requestowner`、`system:module`、`module:view/create/edit/delete`、`system:dept`、`dept:view/create/edit/delete`、`system:login-log` |
 | USER | `board:view`、`requirement:view` |
 
 **权限点总览**：
@@ -156,10 +218,13 @@ npm run dev
 - 自定义角色：`user.role` 为 NULL，`user.role_id` 关联 `sys_role.id`
 
 ### 系统管理菜单
-菜单分组：
-1. **字典管理**：需求对接人维护（ADMIN/MANAGER）、需求方部门维护（ADMIN）、需求模块维护（ADMIN）
-2. **用户与角色**：用户管理（ADMIN）、角色管理（ADMIN）
-3. **日志**：登录日志（ADMIN）
+侧边栏二级菜单（系统管理分组）：
+1. **需求对接人维护**（ADMIN/MANAGER）
+2. **需求方部门维护**（ADMIN/MANAGER）
+3. **需求模块维护**（ADMIN/MANAGER）
+4. **用户管理**（ADMIN）
+5. **角色管理**（ADMIN）
+6. **登录日志**（ADMIN/MANAGER）
 
 - **需求对接人维护**：`sys_request_owner` 字典增删改，重名时返回友好提示
 - **需求方部门维护**：`sys_department` 字典增删改，排序可配置，name 有唯一约束
@@ -182,7 +247,10 @@ CREATE TABLE `user` (
     `role_id`  BIGINT       DEFAULT NULL  COMMENT '自定义角色ID'
 );
 
--- 需求表（字段略，见 init.sql）
+-- 需求表（含 submission_status、submitted_by、expected_online_date 字段）
+-- submission_status: NULL/进入需求池 = 需求进度可见；已创建/待评估/已驳回/已取消 = 仅需求提报可见
+-- submitted_by: 提报人 username
+-- expected_online_date: 期望上线日期
 
 -- 附件表
 CREATE TABLE `attachment` (
@@ -193,12 +261,12 @@ CREATE TABLE `attachment` (
     `created_at`      DATETIME     DEFAULT CURRENT_TIMESTAMP
 );
 
--- 需求操作日志表
+-- 需求操作日志表（需求进度和需求提报共用）
 CREATE TABLE `requirement_log` (
     `id`              BIGINT       PRIMARY KEY AUTO_INCREMENT,
     `requirement_id`  BIGINT       NOT NULL,
     `operator`        VARCHAR(50)  NOT NULL,
-    `operation_type`  VARCHAR(20)  NOT NULL COMMENT '创建/编辑/删除/取消',
+    `operation_type`  VARCHAR(20)  NOT NULL COMMENT '创建/编辑/删除/取消/状态变更',
     `before_content`  TEXT,
     `after_content`   TEXT,
     `created_at`      DATETIME     DEFAULT CURRENT_TIMESTAMP
@@ -291,6 +359,16 @@ CREATE TABLE `login_log` (
 | GET  | `/api/requirements/{id}/attachments` | 附件列表 | 已登录 |
 | POST | `/api/requirements/{id}/attachments` | 关联附件 | 已登录 |
 | DELETE | `/api/attachments/{id}` | 删除附件 | 已登录 |
+| GET  | `/api/inbox` | 提报需求列表 | 已登录 |
+| GET  | `/api/inbox/tab-counts` | 提报各状态数量 | 已登录 |
+| POST | `/api/inbox` | 新建提报需求 | 已登录 |
+| PUT  | `/api/inbox/{id}` | 编辑提报需求 | 已登录 |
+| DELETE | `/api/inbox/{id}` | 删除提报需求 | 已登录 |
+| POST | `/api/inbox/{id}/submit` | 提交评估 | 已登录 |
+| POST | `/api/inbox/{id}/withdraw` | 撤回 | 已登录 |
+| POST | `/api/inbox/{id}/evaluate` | 产品评估 | MANAGER/ADMIN |
+| POST | `/api/inbox/{id}/archive` | 取消 | 已登录 |
+| GET  | `/api/inbox/{id}/logs` | 提报操作日志 | 已登录 |
 | GET  | `/api/dict/departments` | 部门列表 | 已登录 |
 | POST | `/api/dict/departments` | 新增部门 | `dept:create` |
 | PUT  | `/api/dict/departments/{id}` | 编辑部门 | `dept:edit` |
@@ -326,10 +404,13 @@ CREATE TABLE `login_log` (
 | `backend/src/main/resources/sql/init.sql` | 本地开发建表 + 初始数据 |
 | `backend/src/main/resources/sql/init_prod.sql` | 生产环境建表脚本 |
 | `backend/src/main/resources/sql/migrate_v5.2.sql` | V5.2 生产增量迁移脚本 |
-| `backend/src/main/resources/mapper/RequirementMapper.xml` | 核心查询 SQL |
+| `backend/src/main/resources/sql/migrate_v6.0.sql` | V6.0 生产增量迁移脚本（submission_status 索引等）|
+| `backend/src/main/resources/mapper/RequirementMapper.xml` | 核心查询 SQL（含提报相关查询）|
 | `backend/.../config/AuthInterceptor.java` | Token 验证拦截器 |
+| `backend/.../config/WebConfig.java` | 拦截器注册（含 `/api/inbox/**`）|
 | `backend/.../controller/AuthController.java` | 登录/登出/IOA登录 |
 | `backend/.../controller/RequirementController.java` | 需求 CRUD + 日志 + 统计 |
+| `backend/.../controller/InboxController.java` | 需求提报完整流程（含日志）|
 | `backend/.../controller/UploadController.java` | 图片上传（PNG/JPG，≤10MB）|
 | `backend/.../controller/AttachmentController.java` | 附件 CRUD |
 | `backend/.../controller/DictController.java` | 部门/模块/需求对接人字典 CRUD |
@@ -340,15 +421,19 @@ CREATE TABLE `login_log` (
 | `backend/.../service/PermissionService.java` | 内置角色权限硬编码 + 权限树构建 |
 | `backend/.../service/impl/AuthServiceImpl.java` | Token 存储 + 登录日志 |
 | `backend/.../mapper/SysPermissionMapper.java` | 权限点查询（UNION 自动补 MENU code）|
-| `backend/.../entity/RequirementLog.java` | 操作日志实体 |
+| `backend/.../mapper/RequirementMapper.java` | 需求 Mapper（含提报相关方法）|
 | `backend/.../mapper/RequirementLogMapper.java` | 操作日志 Mapper |
 | `backend/.../entity/SysRequestOwner.java` | 需求对接人字典实体 |
 | `backend/.../mapper/SysRequestOwnerMapper.java` | 需求对接人字典 Mapper |
-| `frontend/src/views/Board.vue` | 主看板页（所有功能全在此）|
+| `frontend/src/views/Board.vue` | 需求进度看板页 |
+| `frontend/src/views/InboxBoard.vue` | 需求提报页（V6.0 新增）|
 | `frontend/src/views/Login.vue` | 登录页（IOA/账号密码双Tab）|
+| `frontend/src/views/AppLayout.vue` | 整体布局（顶部导航 + 侧边栏）|
 | `frontend/src/stores/auth.js` | Pinia 登录状态（token/role/permissions/roleId）|
+| `frontend/src/utils/format.js` | 共享工具函数（IOA名称映射/优先级/日期格式化）|
+| `frontend/src/api/inbox.js` | 需求提报全部接口（含日志）|
 | `frontend/src/api/dict.js` | 部门/模块/需求对接人字典接口 |
-| `frontend/src/api/log.js` | 操作日志接口 |
+| `frontend/src/api/log.js` | 需求进度操作日志接口 |
 | `frontend/src/api/attachment.js` | 附件接口 |
 | `frontend/src/api/role.js` | 角色管理接口 |
 | `frontend/src/api/permission.js` | 权限接口 |
@@ -379,7 +464,7 @@ ioa:
 - **后端启动**：`cd /opt/dashboard && nohup java -jar dashboard-backend-1.0.0.jar --server.port=8080 > app.log 2>&1 &`
 - **前端**：静态文件在 `/opt/dashboard/frontend/`
 - **Nginx 配置**：`/etc/nginx/conf.d/dashboard.conf`，`client_max_body_size 10m`，`/api/` 和 `/uploads/` 反代到 `127.0.0.1:8080`
-- **数据库**：MySQL 8.0.44，首次执行 `init_prod.sql`，V5.2 升级执行 `migrate_v5.2.sql`；V5.4 新增 `sys_request_owner` 表（已在生产手动创建）
+- **数据库**：MySQL 8.0.44，首次执行 `init_prod.sql`；V5.2 升级执行 `migrate_v5.2.sql`；V6.0 升级执行 `migrate_v6.0.sql`
 - **注意**：`ALTER TABLE user ADD COLUMN IF NOT EXISTS` 在生产 MySQL 上语法报错，需直接用 `ADD COLUMN`
 - SSH 已配置密钥登录（免密码），账号 root@47.103.56.254
 

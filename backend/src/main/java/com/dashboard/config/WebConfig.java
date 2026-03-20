@@ -29,7 +29,8 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/upload")
                 .addPathPatterns("/api/auth/logout")
                 .addPathPatterns("/api/dict/**")
-                .addPathPatterns("/api/system/**");
+                .addPathPatterns("/api/system/**")
+                .addPathPatterns("/api/inbox/**");
     }
 
     @Override

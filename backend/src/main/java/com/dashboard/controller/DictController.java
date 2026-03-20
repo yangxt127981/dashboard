@@ -98,7 +98,14 @@ public class DictController {
     public Result<?> createRequestOwner(@RequestBody SysRequestOwner owner, HttpServletRequest request) {
         if (!hasPermission(request, "system:requestowner")) return Result.error(403, "无权限操作");
         if (owner.getName() == null || owner.getName().isBlank()) return Result.error(400, "名称不能为空");
-        requestOwnerMapper.insert(owner);
+        try {
+            requestOwnerMapper.insert(owner);
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().contains("Duplicate entry")) {
+                return Result.error(400, "对接人「" + owner.getName() + "」已存在");
+            }
+            throw e;
+        }
         return Result.success(owner.getId());
     }
 
@@ -107,7 +114,14 @@ public class DictController {
         if (!hasPermission(request, "system:requestowner")) return Result.error(403, "无权限操作");
         if (owner.getName() == null || owner.getName().isBlank()) return Result.error(400, "名称不能为空");
         owner.setId(id);
-        requestOwnerMapper.update(owner);
+        try {
+            requestOwnerMapper.update(owner);
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().contains("Duplicate entry")) {
+                return Result.error(400, "对接人「" + owner.getName() + "」已存在");
+            }
+            throw e;
+        }
         return Result.success();
     }
 

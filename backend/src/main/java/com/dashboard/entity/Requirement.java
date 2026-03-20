@@ -20,6 +20,8 @@ public class Requirement {
     private String status;
     private String description;
     private LocalDate expectedOnlineDate;
+    private String submissionStatus;
+    private String submittedBy;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

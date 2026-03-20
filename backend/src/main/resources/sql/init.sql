@@ -25,9 +25,13 @@ CREATE TABLE IF NOT EXISTS `requirement` (
     `expected_online_date` DATE        COMMENT '期望上线日期',
     `status`              VARCHAR(20)  NOT NULL DEFAULT '未开始' COMMENT '状态：未开始/设计中/开发中/测试中/已上线',
     `description`         TEXT         COMMENT '需求价值',
+    `submission_status`   VARCHAR(20)  DEFAULT NULL COMMENT '提报状态：已创建/待评估/已驳回/进入需求池/已取消，NULL表示旧数据直接显示在看板',
+    `submitted_by`        VARCHAR(50)  DEFAULT NULL COMMENT '提报人（IOA username）',
     `created_at`          DATETIME     DEFAULT CURRENT_TIMESTAMP,
     `updated_at`          DATETIME     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='需求表';
+
+CREATE INDEX idx_requirement_submission_status ON requirement(submission_status, created_at);
 
 CREATE TABLE IF NOT EXISTS `attachment` (
     `id`               BIGINT PRIMARY KEY AUTO_INCREMENT,
