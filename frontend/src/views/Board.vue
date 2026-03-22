@@ -492,11 +492,11 @@ const defaultColumns = [
   { key: 'updatedAt',         label: '更新时间',   width: 165,   sortable: 'custom', visible: true },
 ]
 
-const STORAGE_KEY = 'dashboard_column_order'
+const storageKey = computed(() => `dashboard_column_order_${authStore.username || 'default'}`)
 
 function loadColumns() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY)
+    const saved = localStorage.getItem(storageKey.value)
     if (saved) {
       const savedList = JSON.parse(saved) // [{ key, visible }]
       const sorted = savedList
@@ -517,7 +517,7 @@ const columns = ref(loadColumns())
 const visibleColumns = computed(() => columns.value.filter(c => c.visible))
 
 function saveColumns() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(columns.value.map(c => ({ key: c.key, visible: c.visible }))))
+  localStorage.setItem(storageKey.value, JSON.stringify(columns.value.map(c => ({ key: c.key, visible: c.visible }))))
 }
 
 function toggleColumn(key) {
@@ -534,7 +534,7 @@ function toggleColumn(key) {
 
 function resetColumnOrder() {
   columns.value = defaultColumns.map(c => ({ ...c }))
-  localStorage.removeItem(STORAGE_KEY)
+  localStorage.removeItem(storageKey.value)
   ElMessage.success('已重置')
   nextTick(initSortable)
 }
