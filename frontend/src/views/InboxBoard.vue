@@ -70,6 +70,7 @@
             </el-table-column>
             <el-table-column prop="requestDepartment" label="需求方部门" width="120" show-overflow-tooltip sortable="custom" />
             <el-table-column prop="requestOwner" label="需求对接人" width="120" show-overflow-tooltip sortable="custom" />
+            <el-table-column prop="productOwner" label="产品对接人" width="120" show-overflow-tooltip />
             <el-table-column prop="priority" label="优先级" width="90" align="center" sortable="custom">
               <template #default="{ row }">
                 <el-tag :type="priorityType(row.priority)" size="small" effect="plain">{{ row.priority || '—' }}</el-tag>
