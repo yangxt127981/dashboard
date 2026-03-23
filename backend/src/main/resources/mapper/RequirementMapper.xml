@@ -40,6 +40,9 @@
             <if test="productOwner != null and productOwner != ''">
                 AND product_owner LIKE CONCAT('%', #{productOwner}, '%')
             </if>
+            <if test="requestOwner != null and requestOwner != ''">
+                AND request_owner LIKE CONCAT('%', #{requestOwner}, '%')
+            </if>
             <if test="priority != null and priority.size() > 0">
                 AND priority IN
                 <foreach collection="priority" item="p" open="(" separator="," close=")">
@@ -131,6 +134,9 @@
             </if>
             <if test="productOwner != null and productOwner != ''">
                 AND product_owner LIKE CONCAT('%', #{productOwner}, '%')
+            </if>
+            <if test="requestOwner != null and requestOwner != ''">
+                AND request_owner LIKE CONCAT('%', #{requestOwner}, '%')
             </if>
             <if test="priority != null and priority.size() > 0">
                 AND priority IN

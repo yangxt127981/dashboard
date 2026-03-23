@@ -40,10 +40,10 @@
         <el-card class="filter-card" shadow="never">
           <!-- 基础筛选行 -->
           <el-row :gutter="12" align="middle">
-            <el-col :span="5">
+            <el-col :span="4">
               <el-input v-model="query.functionName" placeholder="需求名称" clearable :prefix-icon="Search" />
             </el-col>
-            <el-col :span="4">
+            <el-col :span="3">
               <el-select v-model="query.moduleName" placeholder="所属模块" clearable filterable style="width: 100%;">
                 <el-option v-for="m in moduleOptions" :key="m" :label="m" :value="m" />
               </el-select>
@@ -53,9 +53,14 @@
                 <el-option v-for="d in departmentOptions" :key="d" :label="d" :value="d" />
               </el-select>
             </el-col>
-            <el-col :span="4">
+            <el-col :span="3">
               <el-select v-model="query.productOwner" placeholder="产品对接人" clearable style="width: 100%;">
                 <el-option v-for="p in productOwnerOptions" :key="p" :label="p" :value="p" />
+              </el-select>
+            </el-col>
+            <el-col :span="3">
+              <el-select v-model="query.requestOwner" placeholder="需求对接人" clearable filterable style="width: 100%;">
+                <el-option v-for="o in requestOwnerOptions" :key="o" :label="o" :value="o" />
               </el-select>
             </el-col>
             <el-col :span="7" style="display:flex; align-items:center; gap:8px; flex-wrap:nowrap;">
@@ -566,6 +571,7 @@ const query = reactive({
   requestDepartment: '',
   moduleName: '',
   productOwner: '',
+  requestOwner: '',
   priority: [],
   status: [],
   page: 1,
@@ -644,6 +650,7 @@ function resetQuery() {
   query.moduleName = ''
   query.requestDepartment = ''
   query.productOwner = ''
+  query.requestOwner = ''
   query.priority = []
   query.status = []
   query.page = 1
