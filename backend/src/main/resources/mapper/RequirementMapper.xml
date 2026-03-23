@@ -199,6 +199,9 @@
         <if test="requestOwner != null and requestOwner != ''">
             AND request_owner LIKE CONCAT('%', #{requestOwner}, '%')
         </if>
+        <if test="productOwner != null and productOwner != ''">
+            AND product_owner = #{productOwner}
+        </if>
         <if test="submissionStatus != null and submissionStatus != ''">
             AND submission_status = #{submissionStatus}
         </if>

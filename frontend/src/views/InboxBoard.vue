@@ -21,8 +21,8 @@
               </el-select>
             </el-col>
             <el-col :span="4">
-              <el-select v-model="query.submissionStatus" placeholder="提报状态" clearable style="width:100%;">
-                <el-option v-for="s in submissionStatusOptions" :key="s" :label="s" :value="s" />
+              <el-select v-model="query.productOwner" placeholder="产品对接人" clearable filterable style="width:100%;">
+                <el-option v-for="p in productOwnerOptions" :key="p" :label="p" :value="p" />
               </el-select>
             </el-col>
             <el-col :span="4">
@@ -58,7 +58,7 @@
           </div>
 
           <el-table :data="tableData" v-loading="loading" border style="width:100%;" @sort-change="handleSortChange">
-            <el-table-column prop="functionName" label="需求名称" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="functionName" label="需求名称" min-width="260" show-overflow-tooltip />
             <el-table-column prop="moduleName" label="所属模块" width="120" show-overflow-tooltip>
               <template #default="{ row }">
                 <span v-if="row.moduleName && moduleColorMap[row.moduleName]"
@@ -524,6 +524,7 @@ const query = reactive({
   functionName: '',
   moduleName: '',
   requestDepartment: '',
+  productOwner: '',
   submissionStatus: '',
   priority: [],
   page: 1,
@@ -556,6 +557,7 @@ function resetQuery() {
   query.functionName = ''
   query.moduleName = ''
   query.requestDepartment = ''
+  query.productOwner = ''
   query.submissionStatus = ''
   query.priority = []
   query.page = 1
