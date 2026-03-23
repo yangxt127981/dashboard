@@ -76,9 +76,12 @@
                 <el-tag :type="priorityType(row.priority)" size="small" effect="plain">{{ row.priority || '—' }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="submissionStatus" label="提报状态" width="120" align="center" sortable="custom">
+            <el-table-column prop="submissionStatus" label="提报状态" width="130" align="center" sortable="custom">
               <template #default="{ row }">
                 <el-tag :type="submissionStatusType(row.submissionStatus)" size="small">{{ row.submissionStatus }}</el-tag>
+                <el-tooltip v-if="row.submissionStatus === '已驳回' && row.rejectReason" :content="row.rejectReason" placement="top" :show-after="200">
+                  <el-icon style="margin-left:4px;vertical-align:-2px;color:#f56c6c;cursor:pointer;"><WarningFilled /></el-icon>
+                </el-tooltip>
               </template>
             </el-table-column>
             <el-table-column prop="submittedBy" label="提报人" width="100">
@@ -292,6 +295,9 @@
             <el-radio :value="false">驳回</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item v-if="!evaluateForm.pass" label="驳回意见">
+          <el-input v-model="evaluateForm.rejectReason" type="textarea" :rows="3" placeholder="请输入驳回意见（必填）" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="evaluateVisible = false">取消</el-button>
@@ -483,7 +489,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed, watch } from 'vue'
-import { Search, Refresh, Plus, InfoFilled } from '@element-plus/icons-vue'
+import { Search, Refresh, Plus, InfoFilled, WarningFilled } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { getInboxList, getInboxTabCounts, createInbox, updateInbox, deleteInbox, submitInbox, withdrawInbox, evaluateInbox, archiveInbox, getInboxLogs } from '../api/inbox.js'
 import { update as updateRequirement } from '../api/requirement.js'
@@ -824,19 +830,24 @@ async function handleArchive(row) {
 // ── 评估 ──
 const evaluateVisible = ref(false)
 const evaluating = ref(false)
-const evaluateForm = reactive({ pass: true })
+const evaluateForm = reactive({ pass: true, rejectReason: '' })
 const evaluatingRow = ref(null)
 
 function openEvaluate(row) {
   evaluatingRow.value = row
   evaluateForm.pass = true
+  evaluateForm.rejectReason = ''
   evaluateVisible.value = true
 }
 
 async function handleEvaluate() {
+  if (!evaluateForm.pass && !evaluateForm.rejectReason.trim()) {
+    ElMessage.warning('请填写驳回意见')
+    return
+  }
   evaluating.value = true
   try {
-    await evaluateInbox(evaluatingRow.value.id, evaluateForm.pass)
+    await evaluateInbox(evaluatingRow.value.id, evaluateForm.pass, evaluateForm.rejectReason)
     evaluateVisible.value = false
     if (evaluateForm.pass) {
       await openPoolForm(evaluatingRow.value)

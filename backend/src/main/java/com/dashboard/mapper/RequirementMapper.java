@@ -23,4 +23,5 @@ public interface RequirementMapper {
     List<Requirement> findInboxList(RequirementQueryDTO query);
     List<Map<String, Object>> countInboxByStatus(@Param("submittedBy") String submittedBy);
     int updateSubmissionStatus(@Param("id") Long id, @Param("status") String status);
+    int updateRejectReason(@Param("id") Long id, @Param("rejectReason") String rejectReason);
 }

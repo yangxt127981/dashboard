@@ -162,7 +162,15 @@ public class InboxController {
         if (!"待评估".equals(existing.getSubmissionStatus())) {
             return Result.error(400, "只有「待评估」状态可以评估");
         }
-        String newStatus = "true".equals(body.get("pass")) ? "进入需求池" : "已驳回";
+        boolean pass = "true".equals(body.get("pass"));
+        String newStatus = pass ? "进入需求池" : "已驳回";
+        if (!pass) {
+            String reason = body.get("rejectReason");
+            if (reason == null || reason.trim().isEmpty()) {
+                return Result.error(400, "请填写驳回意见");
+            }
+            requirementMapper.updateRejectReason(id, reason.trim());
+        }
         updateSubmissionStatus(id, newStatus, user.getUsername(), existing);
         return Result.success();
     }

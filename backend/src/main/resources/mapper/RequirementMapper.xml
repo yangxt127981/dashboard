@@ -20,6 +20,7 @@
         <result property="expectedOnlineDate" column="expected_online_date"/>
         <result property="submissionStatus" column="submission_status"/>
         <result property="submittedBy" column="submitted_by"/>
+        <result property="rejectReason" column="reject_reason"/>
         <result property="createdAt" column="created_at"/>
         <result property="updatedAt" column="updated_at"/>
     </resultMap>
@@ -241,6 +242,10 @@
     <!-- 仅更新提报状态 -->
     <update id="updateSubmissionStatus">
         UPDATE requirement SET submission_status = #{status} WHERE id = #{id}
+    </update>
+
+    <update id="updateRejectReason">
+        UPDATE requirement SET reject_reason = #{rejectReason} WHERE id = #{id}
     </update>
 
 </mapper>

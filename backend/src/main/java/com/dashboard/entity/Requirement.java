@@ -22,6 +22,7 @@ public class Requirement {
     private LocalDate expectedOnlineDate;
     private String submissionStatus;
     private String submittedBy;
+    private String rejectReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

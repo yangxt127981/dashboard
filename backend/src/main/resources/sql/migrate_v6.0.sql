@@ -6,3 +6,6 @@ ALTER TABLE requirement
     ADD COLUMN submitted_by VARCHAR(50) DEFAULT NULL COMMENT '提报人（IOA username）';
 
 CREATE INDEX idx_requirement_submission_status ON requirement(submission_status, created_at);
+
+-- V6.0.3 驳回意见
+ALTER TABLE requirement ADD COLUMN reject_reason VARCHAR(500) DEFAULT NULL COMMENT '驳回意见';
