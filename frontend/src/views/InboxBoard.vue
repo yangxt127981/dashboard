@@ -506,7 +506,7 @@ const moduleOptions = ref([])
 const moduleColorMap = ref({})
 const requestOwnerOptions = ref([])
 const priorityOptions = ['紧急', '高', '中', '低']
-const productOwnerOptions = ['刘秋诗', '赵轶群', '丁滢', 'Hanson', '张明洋']
+const productOwnerOptions = ['刘秋诗', '赵轶群', '丁滢', 'Hanson', '张明洋', '邵森伟']
 const statusOptions = ['未开始', '设计中', '开发中', '测试中', '已上线', '已取消']
 const submissionStatusOptions = ['已创建', '待评估', '已驳回', '进入需求池', '已取消']
 
