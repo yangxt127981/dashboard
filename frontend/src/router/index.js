@@ -12,6 +12,7 @@ const routes = [
       { path: 'board', component: () => import('../views/Board.vue') },
       { path: 'inbox', component: () => import('../views/InboxBoard.vue') },
       { path: 'system/request-owner', component: () => import('../views/SystemRequestOwner.vue') },
+      { path: 'system/product-owners', component: () => import('../views/SystemProductOwner.vue') },
       { path: 'system/dept', component: () => import('../views/SystemDept.vue') },
       { path: 'system/module', component: () => import('../views/SystemModule.vue') },
       { path: 'system/users', component: () => import('../views/SystemUsers.vue') },

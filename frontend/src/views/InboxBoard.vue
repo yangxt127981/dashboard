@@ -494,7 +494,7 @@ import { ElMessage } from 'element-plus'
 import { getInboxList, getInboxTabCounts, createInbox, updateInbox, deleteInbox, submitInbox, withdrawInbox, evaluateInbox, archiveInbox, getInboxLogs } from '../api/inbox.js'
 import { update as updateRequirement } from '../api/requirement.js'
 import { getAttachments, addAttachment, deleteAttachment } from '../api/attachment.js'
-import { getDepartments, getModules, getRequestOwners } from '../api/dict.js'
+import { getDepartments, getModules, getRequestOwners, getProductOwners } from '../api/dict.js'
 import { useAuthStore } from '../stores/auth.js'
 import { displayName, priorityType, formatDatetime } from '../utils/format.js'
 
@@ -506,17 +506,18 @@ const moduleOptions = ref([])
 const moduleColorMap = ref({})
 const requestOwnerOptions = ref([])
 const priorityOptions = ['紧急', '高', '中', '低']
-const productOwnerOptions = ['刘秋诗', '赵轶群', '丁滢', 'Hanson', '张明洋', '邵森伟']
+const productOwnerOptions = ref([])
 const statusOptions = ['未开始', '设计中', '开发中', '测试中', '已上线', '已取消']
 const submissionStatusOptions = ['已创建', '待评估', '已驳回', '进入需求池', '已取消']
 
 async function loadDicts() {
-  const [deptRes, moduleRes, ownerRes] = await Promise.all([getDepartments(), getModules(), getRequestOwners()])
+  const [deptRes, moduleRes, ownerRes, productOwnerRes] = await Promise.all([getDepartments(), getModules(), getRequestOwners(), getProductOwners()])
   departmentOptions.value = (deptRes.data || []).map(d => d.name)
   const modules = moduleRes.data || []
   moduleOptions.value = modules.map(m => m.name)
   moduleColorMap.value = Object.fromEntries(modules.filter(m => m.bgColor).map(m => [m.name, m.bgColor]))
   requestOwnerOptions.value = (ownerRes.data || []).map(o => o.name)
+  productOwnerOptions.value = (productOwnerRes.data || []).map(o => o.name)
 }
 
 // ── 列表 ──

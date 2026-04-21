@@ -1,0 +1,63 @@
+schema: spec-driven
+
+context: |
+  Project: ONE家项目计划看板 (V6.0) — Internal project management dashboard for the IT department to manage multi-department requirements with transparent progress tracking.
+
+  ## Tech Stack
+  - Backend: Spring Boot 3.2.3 + MyBatis + PageHelper, Java 17
+  - Frontend: Vue 3 + Vite + Element Plus + Pinia + Vue Router 4 + Axios + ECharts
+  - Database: MySQL, database name `dashboard_db`
+  - Production: Alibaba Cloud (47.103.56.254), Nginx reverse proxy
+
+  ## Project Structure
+  - /backend — Spring Boot application (com.dashboard)
+  - /frontend/src/views — Vue page components (Board.vue, InboxBoard.vue, AppLayout.vue, Login.vue, System*.vue)
+  - /frontend/src/api — API modules (inbox.js, dict.js, log.js, attachment.js, role.js, permission.js)
+  - /frontend/src/utils/format.js — Shared utilities (IOA name mapping, priorityType, formatDatetime)
+  - /frontend/src/stores/auth.js — Pinia auth store (token, role, permissions, roleId)
+
+  ## Domain Concepts
+  - Requirement (需求): core entity with fields: functionName, module, requestDepartment, requestOwner (multi-select), productOwner, priority, status, planStart/End, actualStart/End, description (需求价值), expectedOnlineDate, submissionStatus, submittedBy, rejectReason
+  - Priority enum: 紧急 / 高 / 中 / 低
+  - Status enum: 未开始 / 设计中 / 开发中 / 测试中 / 已上线 / 已取消
+  - Submission status flow: 已创建 → 待评估 → 进入需求池 OR 已驳回 → 已取消
+  - submissionStatus NULL or '进入需求池' = visible on main board (Board.vue); other values = visible only in inbox (InboxBoard.vue)
+
+  ## Auth & Permissions
+  - RBAC with 3 built-in roles: ADMIN (all), MANAGER (view/create/edit/cancel + system management), USER (read-only)
+  - IOA SSO login supported (auto-creates USER, specific accounts auto-upgrade to MANAGER)
+  - Token stored in ConcurrentHashMap, validated by AuthInterceptor on all /api/** except /api/auth/**
+  - Permissions returned on login, stored in Pinia + localStorage, enforced via v-if (frontend) and controller checks (backend)
+
+  ## Conventions
+  - Conventional commits in Chinese (feat: / fix: / refactor:)
+  - ProductOwner options hardcoded in Board.vue and InboxBoard.vue: productOwnerOptions array
+  - MANAGER IOA accounts hardcoded in AuthController.java (case-insensitive)
+  - requestOwner stored as comma-separated string, displayed as multi-select
+  - IOA account → display name mapping in frontend/src/utils/format.js IOA_DISPLAY_NAMES
+  - Shared utilities (priorityType, formatDatetime, displayName) must be imported from utils/format.js, not redefined locally
+  - Data scoping: USER sees only own inbox submissions (submitted_by filter); ADMIN/MANAGER see all
+  - ADMIN can edit/delete inbox requirements regardless of submission status
+
+  ## Key Backend Files
+  - RequirementMapper.xml — core SQL including inbox queries and tab counts
+  - InboxController.java — full inbox workflow with operation logging
+  - PermissionService.java — built-in role permissions hardcoded here
+  - AuthInterceptor.java — sets request attribute "currentUser"
+
+  ## Deployment
+  - Build: `npm run build` (frontend) + `mvn clean package -DskipTests` (backend, requires JAVA_HOME=jdk-17)
+  - Upload via scp; frontend is static files only (no Nginx restart needed); backend requires restart
+  - Nginx serves maintenance.html (502/503) during backend restart
+
+# Per-artifact rules (optional)
+rules:
+  proposal:
+    - All UI text must be in Chinese
+    - Follow existing Element Plus component patterns from Board.vue
+    - New form fields must be added to both create and edit dialogs
+    - Backend permission checks required alongside frontend v-if guards
+  tasks:
+    - Specify which files need changes (frontend and/or backend)
+    - Note if a database migration script is needed
+    - Note if production deployment requires backend restart

@@ -134,7 +134,8 @@ INSERT INTO `sys_permission` (`id`, `name`, `code`, `type`, `parent_id`, `sort_o
 (50, '角色管理',   'system:role',         'MENU',   NULL, 50),
 (51, '新增角色',   'role:create',         'BUTTON', 50,   1),
 (52, '编辑角色',   'role:edit',           'BUTTON', 50,   2),
-(53, '删除角色',   'role:delete',         'BUTTON', 50,   3)
+(53, '删除角色',   'role:delete',         'BUTTON', 50,   3),
+(60, '产品对接人维护', 'system:productowner', 'MENU', NULL, 60)
 ON DUPLICATE KEY UPDATE id=id;
 
 -- 需求对接人字典

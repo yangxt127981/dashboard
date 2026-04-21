@@ -66,6 +66,15 @@
                   <span class="nav-label">需求对接人维护</span>
                 </div>
                 <div
+                  v-if="authStore.hasPermission('system:productowner')"
+                  class="nav-item nav-item-sub"
+                  :class="{ active: route.path === '/system/product-owners' }"
+                  @click="router.push('/system/product-owners')"
+                >
+                  <el-icon><User /></el-icon>
+                  <span class="nav-label">产品对接人维护</span>
+                </div>
+                <div
                   v-if="authStore.hasPermission('system:dept')"
                   class="nav-item nav-item-sub"
                   :class="{ active: route.path === '/system/dept' }"
@@ -155,7 +164,7 @@ const roleBadgeLabel = computed(() => {
   return '自定义角色'
 })
 const hasAnySystemPermission = computed(() =>
-  ['system:dept', 'system:module', 'system:user', 'system:login-log', 'system:role', 'system:requestowner']
+  ['system:dept', 'system:module', 'system:user', 'system:login-log', 'system:role', 'system:requestowner', 'system:productowner']
     .some(p => authStore.hasPermission(p))
 )
 

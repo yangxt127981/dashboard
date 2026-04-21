@@ -18,13 +18,15 @@ public class PermissionService {
         "system:user",        "user:view",    "user:create",   "user:edit",   "user:delete",
         "system:login-log",
         "system:role",        "role:create",  "role:edit",     "role:delete",
-        "system:requestowner"
+        "system:requestowner",
+        "system:productowner"
     );
 
     private static final Set<String> MANAGER_PERMISSIONS = Set.of(
         "board:view",
         "requirement:view", "requirement:create", "requirement:edit", "requirement:cancel",
         "system:requestowner",
+        "system:productowner",
         "system:module", "module:view", "module:create", "module:edit", "module:delete",
         "system:dept", "dept:view", "dept:create", "dept:edit", "dept:delete",
         "system:login-log"

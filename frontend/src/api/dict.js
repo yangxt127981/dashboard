@@ -17,3 +17,9 @@ export const getRequestOwners = () => http.get('/dict/request-owners')
 export const createRequestOwner = (data) => http.post('/dict/request-owners', data)
 export const updateRequestOwner = (id, data) => http.put(`/dict/request-owners/${id}`, data)
 export const deleteRequestOwner = (id) => http.delete(`/dict/request-owners/${id}`)
+
+// 产品对接人
+export const getProductOwners = () => http.get('/dict/product-owners')
+export const createProductOwner = (data) => http.post('/dict/product-owners', data)
+export const updateProductOwner = (id, data) => http.put(`/dict/product-owners/${id}`, data)
+export const deleteProductOwner = (id) => http.delete(`/dict/product-owners/${id}`)
